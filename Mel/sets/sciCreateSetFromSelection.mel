@@ -1,0 +1,37 @@
+//
+// Create a set from selection.
+//
+//__________________________________________________________
+//
+//
+global proc sciCreateObjectSetFromSelection()
+{
+	string $OK     = (uiRes("m_ModCreateMenu.kOk"));
+	string $cancel = (uiRes("m_ModCreateMenu.kCancel"));
+
+	// Prompt the user for a new character name
+	//
+	string $result = promptDialog(	"-title",         "Create a objectSet from selection",
+									"-message",       "Enter the set name",
+									"-text",          "set_",
+									"-button",        $OK,
+									"-button",        $cancel,
+									"-defaultButton", $OK,
+									"-cancelButton",  $cancel,
+									"-dismissString", $cancel );
+
+	// If the result was "OK", then proceed
+	//
+	if( $result==$OK )
+	{
+		string $characterName = promptDialog( "-q" );
+		string $newName;
+		$newName = sets(	"-text",
+							"gSciSet",
+							"-name", $characterName );
+	}
+}
+
+//_________________________________________________________
+//
+//
