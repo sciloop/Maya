@@ -1,0 +1,86 @@
+//
+// creator : sciloop
+//
+// Toggle the content of a set.
+//
+// Select the item to toggle and the
+// relevant set.
+//
+// The set may be the second input argument
+// or it may be in the selection list
+// at the last position.
+//
+// sciToggleSetContent( {}, "" );
+//
+//________________________________________________________
+//
+//
+global proc sciToggleSetContent(	string $items[],
+									string $set )
+{
+	string $sn = " // sciloop message : mel :"+
+				" 'sciToggleSetContent :";
+
+	int $size = size( $items );
+
+	if( $size==0 )
+	{
+		$items = ls( "-l", "-fl", "-selection" );
+		$size = size( $items );
+	}
+
+	int $minSelSize = 2;
+	int $maxItemIndex = $size-1;
+
+	if( $set!="" )
+	{
+		if( objExists($set) && nodeType($set)=="objectSet" )
+		{
+			$minSelSize = 1;
+			$maxItemIndex = $size;
+		}
+	}
+
+	if( $size<$minSelSize )
+	{
+		print(	$sn+" select at least one items of the"+
+				" set and the objectSet itself."+
+				" Script execution terminated!\n" );
+		return;
+	}
+
+	if( $minSelSize==2 )
+	{
+		$set = $items[$maxItemIndex];
+
+		if( nodeType($set)!="objectSet" )
+		{
+			print(	$sn+" the last selected items must be"+
+					" of type 'objectSet'."+
+					" Script execution terminated!\n" );
+			return;
+		}
+	}
+
+	for( $i=0; $i<$maxItemIndex; $i++ )
+	{
+		if( sets("-isMember", $set, $items[$i]) )
+		{
+			sets( "-rm", $set, $items[$i] );
+			print( $sn+" '"+$items[$i]+
+					"' removed from '"+$set+"'\n" );
+		}
+		else
+		{
+			sets( "-in", $set, $items[$i] );
+			print( $sn+" '"+$items[$i]+
+					"' added to '"+$set+"'\n" );
+		}
+	}
+
+	print( $sn+" done!\n" );
+}
+
+//________________________________________________________
+//
+//
