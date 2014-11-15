@@ -1,0 +1,849 @@
+//
+// creator : sciloop
+//
+// last update: 2014_09_16
+//
+// Display all attributes,their values, types and whether they
+// are multi/parent/child in the script editor.
+//
+// examples :
+//
+// sciListAttributes( ls( "-l", "-selection" ) );
+// sciListAttributes( {""} );
+//
+//_______________________________________________________
+//
+//
+proc string sciGetAttrVal(  string $type,
+                            string $fullName )
+{
+    string $value = "";
+
+    if( $type=="message" )
+    {$value = "has no value";}
+
+    //
+    else if(    $type=="long"           || $type=="doubleAngle" ||
+                $type=="enum"           || $type=="doubleLinear"||
+                $type=="time"           || $type=="double"      ||
+                $type=="bool"           || $type=="string"      ||
+                $type=="byte"           || $type=="short"       ||
+                $type=="float"          || $type=="floatLinear" )
+    {
+        if( catchQuiet( $value = getAttr($fullName) ) )
+        {$value = " value not displayable for type : "+$type;}
+
+        else if( $type=="string" )
+        {$value = "'"+$value+"'";}
+
+        else if( $type=="enum" )
+        {$value = $value+" : "+getAttr( "-asString", $fullName );}
+
+        else if( $type=="bool" )
+        {
+            string $boolean = "";
+
+            if( $value==0 )
+            {$boolean = "false";}
+            else if( $value==1 )
+            {$boolean = "true";}
+            else
+            {$boolean = "is not false or true";}
+
+            $value = $value+" : "+$boolean;
+        }
+    }
+
+    // matrix
+    //
+    else if( $type=="matrix" )
+    {
+        float $mat[] = {};
+
+        if( catchQuiet( $mat = getAttr($fullName) ) )
+        {$value = "matrix value not displayable for type : "+$type;}
+        else
+        {
+            int $matSize = size( $mat );
+
+            for( $k=0; $k<$matSize; $k++ )
+            {
+                if( $k==0 )
+                {$value = $mat[$k]+" ";}
+
+                else if( $k==3 || $k==7 || $k==11 )
+                {$value = $value+$mat[$k]+"     ";}
+                else
+                {$value = $value+$mat[$k]+" ";}
+            }
+        }
+    }
+
+    // floats arrays
+    //
+    else if(    $type=="doubleArray"    || $type=="vectorArray"     ||
+                $type=="pointArray"     || $type=="float3"          ||
+                $type=="float2"         || $type=="double3"         ||
+                $type=="double2"        || $type=="reflectanceRGB"  ||
+                $type=="spectrumRGB" )
+    {
+
+        float $valueFloat[] = {};
+
+        if( catchQuiet( $valueFloat = getAttr($fullName) ) )
+        {$value = "floatArray value not displayable for type : "+$type;}
+        else
+        {
+            int $size = size( $valueFloat );
+
+            if( $type=="doubleArray" ||
+                $type=="vectorArray" ||
+                $type=="pointArray" )
+            {$value = "size: "+$size+"  values: ";}
+
+            for( $i=0; $i<$size; $i++ )
+            {
+                $value += $valueFloat[$i]+" ";
+
+                if( $i==9 )
+                {
+                    $value += ". . .";
+                    break;
+                }
+            }
+        }
+    }
+
+    // int arrays
+    //
+    else if(    $type=="int32Array" || $type=="short3"  ||
+                $type=="short2"     || $type=="long3"   ||
+                $type=="long2" )
+    {
+        int $valueInt[] = {};
+
+        if( catchQuiet( $valueInt = getAttr($fullName) ) )
+        {$value = "intArray value not displayable for type : "+$type;}
+        else
+        {
+            int $size = size( $valueInt );
+
+            if( $type=="int32Array" )
+            {$value = "size: "+$size+"  values: ";}
+
+            for( $i=0; $i<$size; $i++ )
+            {
+                $value += $valueInt[$i]+" ";
+
+                if( $i==6 )
+                {break;}
+            }
+        }
+
+    }
+
+    // string arrays
+    //
+    else if( $type=="stringArray" || $type=="componentList" )
+    {
+        string $valueStringArray[] = {};
+        if( catchQuiet( $valueStringArray = getAttr($fullName) ) )
+        {$value = "stringArray value not displayable for type : "+$type;}
+        else
+        {
+            int $size = size( $valueStringArray );
+
+            $value = "size: "+$size+"  stringArray values: ";
+
+            for( $i=0; $i<$size; $i++ )
+            {
+                $value += $valueStringArray[$i]+" ";
+                if( $i==9 )
+                {
+                    $value += ". . .";
+                    break;
+                }
+            }
+        }
+    }
+
+    // other types not dealt with explictly
+    //
+    else
+    {
+        string $valueStringArray[] = {};
+        int $valueIntArray[] = {};
+        float $valueFloatArray[] = {};
+
+        int $valueInt;
+        float $valueFloat;
+        string $valueString;
+
+        if( catchQuiet( getAttr($fullName) ) )
+        {$value = "not displayable for type : "+$type;}
+        else
+        {
+            if( !catchQuiet( $valueStringArray = getAttr($fullName) ) )
+            {
+                int $size = 0;
+                if( catchQuiet( $size = size($valueStringArray) ) )
+                {}
+                else
+                {
+                    $value = "size: "+$size+"  stringArray values: ";
+
+                    for( $i=0; $i<$size; $i++ )
+                    {
+                        $value += $valueStringArray[$i]+" ";
+                        if( $i==9 )
+                        {
+                            $value += ". . .";
+                            break;
+                        }
+                    }
+                }
+            }
+            else if( !catchQuiet( $valueIntArray = getAttr($fullName) ) )
+            {
+                int $size = 0;
+                if( catchQuiet( $size = size($valueIntArray) ) )
+                {}
+                else
+                {
+                    $value = "size: "+$size+"  intArray values: ";
+
+                    for( $i=0; $i<$size; $i++ )
+                    {
+                        $value += $valueIntArray[$i]+" ";
+                        if( $i==9 )
+                        {
+                            $value += ". . .";
+                            break;
+                        }
+                    }
+                }
+            }
+            else if( !catchQuiet( $valueFloatArray = getAttr($fullName) ) )
+            {
+                int $size = 0;
+                if( catchQuiet( $size = size($valueFloatArray) ) )
+                {}
+                else
+                {
+                    $value = "size: "+$size+"  floatArray values: ";
+
+                    for( $i=0; $i<$size; $i++ )
+                    {
+                        $value += $valueFloatArray[$i]+" ";
+                        if( $i==9 )
+                        {
+                            $value += ". . .";
+                            break;
+                        }
+                    }
+                }
+            }
+            else if( !catchQuiet( $valueString = getAttr($fullName) ) )
+            {$value = " string value: "+$valueString;}
+            else if( !catchQuiet( $valueFloat = getAttr($fullName) ) )
+            {$value = "float value: "+$valueFloat;}
+            else if( !catchQuiet( $valueInt = getAttr($fullName) ) )
+            {$value = "int value: "+$valueInt;}
+            else
+            {$value = "not displayable for type : "+$type;}
+        }
+
+    }
+
+    return $value;
+}
+
+//______________________________________________________________________
+//
+//
+global proc sciListAttributes( string $sel[] )
+{
+    if( size($sel)==0 )
+    {$sel = ls( "-l", "-selection" );}
+
+    if( size($sel)==0 )
+    {
+        print( " Select a node, please.\n" );
+        return;
+    }
+
+    if( !objExists( $sel[0] ) )
+    {
+        print( " The object "+$sel[0]+" does not exist.\n" );
+        return;
+    }
+
+
+    $sel = ls( "-l", $sel[0] );
+    $node = $sel[0];
+
+    string $isMultiString   = "";
+    string $isElementString = "";
+    string $isParentString  = "";
+    string $isChildString   = "";
+
+    int $isMulti   = false;
+    int $isElement = false;
+    int $isParent  = false;
+    int $isChild   = false;
+
+    string $nodeType   = nodeType( $node );
+    string $allAttr[]  = attributeInfo( "-all", $node );//listAttr( $node );
+    int $sizeAttr      = size( $allAttr );
+
+    string $readAttr[] = {};
+    string $writableAttr[] = {};
+
+    for( $p=0; $p<size($allAttr); $p++ )
+    {
+        if( attributeQuery( "-node", $node, "-writable", $allAttr[$p] ) )
+        {$writableAttr[size($writableAttr)] = $allAttr[$p];}
+        else
+        {$readAttr[size($readAttr)] = $allAttr[$p];}
+    }
+
+    print( " node : "+$node+"\n" );
+    print( " type : "+$nodeType+"\n\n" );
+    print( " attributes : "+$sizeAttr+"\n\n" );
+
+    for( $p=0; $p<2; $p++ )
+    {
+        clear $allAttr;
+
+        if( $p==0 )
+        {
+            $allAttr = $writableAttr;
+            print( " input attributes : "+size($allAttr)+"\n" );
+        }
+        else
+        {
+            $allAttr = $readAttr;
+            print( " \n\n output attributes : "+size($allAttr)+"\n" );
+        }
+
+        $sizeAttr = size( $allAttr );
+
+        for( $i=0; $i<$sizeAttr; $i++ )
+        {
+            int $isMult   = false;
+            int $isParent = false;
+            int $isChild  = false;
+            string $parent[] = {};
+            string $childs[] = {};
+            string $mult[]   = {};
+            clear $parent;
+            clear $mult;
+            clear $childs;
+
+            if( catchQuiet( $isMult = attributeQuery( "-multi", "-n", $node, $allAttr[$i] ) ) )
+            {continue;}
+
+            $mult     = plugMultiAttrs( $node+"."+$allAttr[$i] );
+            $parent   = attributeQuery( "-listParent",   "-n", $node, $allAttr[$i] );
+            $childs   = attributeQuery( "-listChildren", "-n", $node, $allAttr[$i] );
+
+            int $sizeParent = size( $parent );
+            int $sizeChilds = size( $childs );
+
+            if( $sizeParent==0 )
+            {$isChild = false;}
+            else
+            {$isChild = true;}
+
+            if( $sizeChilds==0 )
+            {$isParent = false;}
+            else
+            {$isParent = true;}
+
+            string $elements[] = {};
+
+            string $attrString = "";
+            string $startVoid = " ";
+
+            string $void0 = "";
+            int $max0 = 60;
+            int $max1 = 26;
+            string $void1 = "";
+            string $type = "";
+            string $type0 = "";
+            string $type1 = "";
+            string $fullName = "";
+            string $value = "";
+
+            // Get character count of attribute name.
+            //
+            int $attrLength = size( $allAttr[$i] );
+            if( $attrLength<55 )
+            {$max0 = 60;}
+            else if( $attrLength<95 )
+            {$max0 = 100;}
+            for( $m=0; $m<($max0-$attrLength); $m++ )
+            {$void0 = $void0+" ";}
+
+            if( $isMult )
+            {$isMultiString = "yesMulti ";}
+            else
+            {$isMultiString = "noMulti  ";}
+
+            if( attributeExists($allAttr[$i], $node) )
+            {
+                // case: NO mult, NO parent, NO child:
+                //
+                if( !$isMult )
+                {
+                    $isElementString = "noElement ";
+
+                    int $failed = catchQuiet( $type0 =
+                                    attributeQuery( "-node", $node,
+                                                "-attributeType", $allAttr[$i] ) );
+
+                    if( $failed==true )
+                    {$type0 = "typeFailed";}
+
+                    if( $type0=="" && $failed==false )
+                    {$type0 = "empty return";}
+
+                    $failed = catchQuiet( $type1 =
+                                getAttr(    "-type",
+                                            $node+"."+$allAttr[$i] ) );
+
+                    if( $failed==true )
+                    {$type1 = "typeFailed";}
+
+                    if( $type1=="" && $failed==false )
+                    {$type1 = "empty return";}
+
+                    if( $type0==$type1 )
+                    {$type = $type0;}
+                    else
+                    {$type = $type0+" : "+$type1;}
+
+                    int $typeLength = size( $type );
+
+                    for( $m=0; $m<($max1-$typeLength); $m++ )
+                    {$void1 = $void1+" ";}
+
+
+                    if( $isChild==true )
+                    {$isChildString = "yesChild";}
+                    else
+                    {$isChildString = "noChild ";}
+
+                    $value = sciGetAttrVal( $type1,$node+"."+$allAttr[$i] );
+                    if( $isParent==false )
+                    {$isParentString = "noParent ";}
+                    else
+                    {$isParentString = "yesParent";}
+
+                    print(  $startVoid+$allAttr[$i]+$void0+$type+$void1+
+                            $isElementString+" "+$isParentString+" "+
+                            $isChildString+" "+$value+"\n" );
+                }
+
+                // case : multi
+                //
+                if( $isMult )
+                {
+                    $elements = listAttr( "-multi", $node+"."+$allAttr[$i] );
+                    int $sizeElem = size( $elements );
+
+                    // Limit the element count ->
+                    // can take forever if too much elements
+                    //
+                    if( $sizeElem>10000 )
+                    {
+                        print( "ElementCount of '"+$allAttr[$i]+"' is too high -> "+
+                                $sizeElem+". Limit too 10000.\n" );
+                        $sizeElem = 10000;
+                    }
+
+                    // The multi attribute has no elements
+                    //
+                    //if( $sizeElem==0 )
+                    if( 1 )
+                    {
+                        int $failed = catchQuiet( $type0 =
+                                        attributeQuery( "-node", $node,
+                                                        "-attributeType", $allAttr[$i] ) );
+
+                        if( $failed==true )
+                        {$type0 = "typeFailed";}
+
+                        if( $type0=="" && $failed==false )
+                        {$type0 = "empty return";}
+
+                        $failed = catchQuiet( $type1 =
+                                            getAttr(    "-type",
+                                                        $node+"."+$allAttr[$i] ) );
+
+                        if( $failed==true )
+                        {$type1 = "typeFailed";}
+
+                        if( $type1=="" && $failed==false )
+                        {$type1 = "empty return";}
+
+                        if( $type0==$type1 )
+                        {$type = $type0;}
+                        else
+                        {$type = $type0+" : "+$type1;}
+
+                        int $typeLength = size( $type );
+
+                        for( $m=0; $m<($max1-$typeLength); $m++ )
+                        {$void1 = $void1+" ";}
+
+
+                        $isElementString = "yesMulti  ";
+                        if( $isChild==true )
+                        {$isChildString = "yesChild";}
+                        else
+                        {$isChildString = "noChild ";}
+
+                        if( !$isParent )
+                        {$isParentString = "noParent ";}
+                        else
+                        {$isParentString = "yesParent";}
+
+                        $value = "";
+                        print(  $startVoid+$allAttr[$i]+$void0+$type+$void1+
+                                $isElementString+" "+$isParentString+" "+
+                                $isChildString+" "+$value+"\n" );
+                    }
+
+                    // the multi has elements
+                    // ignore the multi attribute itself
+                    //
+                    for( $k=0; $k<$sizeElem; $k++ )
+                    {
+                        string $buffer0[] = {};
+                        clear $buffer0;
+                        int $numTokens0 = tokenize( $elements[$k], ".", $buffer0 );
+                        string $lastAttr = $buffer0[$numTokens0-1];
+
+                        string $buffer1[] = {};
+                        clear $buffer1;
+                        int $numTokens1 = tokenize( $lastAttr, "[", $buffer1 );
+                        string $pureAttr = $buffer1[0];
+
+
+                        int $numChilds[] = {};
+                        clear $numChilds;
+                        $numChilds = attributeQuery(    "-numberOfChildren",
+                                                        "-n", $node,
+                                                        $pureAttr );
+
+                        int $isMult = attributeQuery( "-multi", "-n", $sel, $pureAttr );
+
+                        string $par[] = {};
+                        $par[0] = "";
+                        $par    = attributeQuery( "-listParent", "-n", $node, $pureAttr );
+
+
+                        if( $numTokens1>1 )
+                        {$isElementString = "yesElement ";}
+                        else
+                        {$isElementString = "noElement  ";}
+
+                        if( $numChilds[0] )
+                        {$isParentString = "yesParent ";}
+                        else
+                        {$isParentString = "noParent  ";}
+
+                        if( $par[0]=="" )
+                        {$isChildString = "noChild  ";}
+                        else
+                        {$isChildString = "yesChild ";}
+
+                        // Get charactor count of attribute name.
+                        //
+                        $void0 = "";
+                        $void1 = "";
+                        $attrLength = size( $elements[$k] );
+
+                        if( $attrLength<55 )
+                        {$max0 = 60;}
+                        else if( $attrLength<95 )
+                        {$max0 = 100;}
+                        for( $m=0; $m<$max0-$attrLength; $m++ )
+                        {$void0 = $void0+" ";}
+
+                        // Get character count of attribute type.
+                        //
+                        int $failed = catchQuiet( $type0 =
+                                        attributeQuery(   "-node", $node,
+                                                          "-attributeType", $pureAttr ) );
+
+                        if( $failed==true )
+                        {$type0 = "typeFailed";}
+
+                        if( $type0=="" && $failed==false )
+                        {$type0 = "empty return";}
+
+
+                        catchQuiet( $type1 = getAttr( "-type", $node+"."+$allAttr[$i] ) );
+
+
+                        if( $failed==true )
+                        {$type1 = "typeFailed";}
+
+                        if( $type1=="" && $failed==false )
+                        {$type1 = "empty return";}
+
+                        if( $type0==$type1 )
+                        {$type = $type0;}
+                        else
+                        {$type = $type0+" : "+$type1;}
+
+                        int $typeLength = size( $type );
+
+                        for( $m=0; $m<($max1-$typeLength); $m++ )
+                        {$void1 = $void1+" ";}
+
+                        $value = sciGetAttrVal( $type1,
+                                                $node+"."+$elements[$k] );
+
+                        print(  $startVoid+$elements[$k]+$void0+$type+
+                                $void1+$isElementString+$isParentString+
+                                $isChildString+$value+"\n" );
+                    }
+                }
+            }
+            else
+            {
+                if( $isMult==true )
+                {$isMultiString = "yesMulti  ";}
+                else
+                {$isMultiString = "noMulti   ";}
+
+                if( $isChild==true )
+                {$isChildString = "yesChild";}
+                else
+                {$isChildString = "noChild ";}
+
+                if( $isParent==false )
+                {$isParentString = "noParent ";}
+                else
+                {$isParentString = "yesParent";}
+
+                int $failed = catchQuiet( $type =
+                                attributeQuery(   "-node", $node,
+                                                  "-attributeType", $allAttr[$i] ) );
+
+                if( $failed==true )
+                {$type = "typeFailed";}
+
+                $prefix = $type+" : ";
+                catchQuiet( $type = getAttr( "-type", $node+"."+$allAttr[$i] ) );
+
+                if( $failed )
+                {$type = "type failed";}
+
+                if( $type=="" )
+                {$type = "empty return";}
+
+                int $typeLength = size( $type );
+
+                for( $m=0; $m<($max1-$typeLength); $m++ )
+                {$void1 = $void1+" ";}
+
+                print(  $startVoid+$allAttr[$i]+$void0+$type+$void1+
+                        $isMultiString+" "+$isParentString+" "+
+                        $isChildString+"\n" );
+            }
+        }
+    }
+}
+
+//________________________________________________________________________
+//
+//
+
+/*
+
+-dt
+
+Int32Array
+doubleArray
+pointArray
+vectorArray
+stringArray
+string
+matrix
+sphere
+cone
+mesh
+lattice
+spectrumRGB
+reflectanceRGB
+componentList
+attributeAlias
+nurbsCurve
+nurbsSurface
+nurbsTrimface
+polyFaces
+float2
+float3
+double2
+double3
+long2
+long3
+short2
+short3
+fltMatrix
+
+-at
+
+bool
+byte -> this is actually a unsigned char
+char
+enum
+doubleAngle
+doubleLinear
+compound
+message
+time
+reflectance
+spectrum
+float
+float2
+float3
+double
+double2
+double3
+short
+short2
+short3
+long
+long2
+long2
+
+The x2 and x3 types may be -at or -dt
+when they are added as dynamic attributes.
+
+types from a scene with 'string $sel[] = allNodeTypes();'
+left side : attributeQuery -attributeType
+right side : getAttr -type
+
+full scene attribute list : 109
+                                         example node+attribute name
+message : message                        AISEnvFacade1.message
+message : typeFailed                     AISEnvFacade1.extraLightShape
+bool : bool                              AISEnvFacade1.caching
+bool : TdataCompound                     aimConstraint1.isHierarchicalConnection
+bool : typeFailed                        AISEnvFacade1.extraLightShadows
+byte : byte                              AISEnvFacade1.isHistoricallyInteresting
+byte : typeFailed                        aimConstraint1.renderLayerColor
+enum : enum                              AISEnvFacade1.nodeState
+enum : TdataCompound                     animCurveTA1.keyTanInType
+enum : typeFailed                        airField1.falloffCurve_Interp
+typed : string                           AISEnvFacade1.binMembership
+typed : subdivTextCoord                  subdivShape1.textureCoord
+typed : subdivEdgeCrease                 subdivShape1.edgeCrease
+typed : subd                             subdAddTopology1.outSubdiv
+typed : dataSelectionList                objectAttrFilter1.outputList
+typed : nurbsSurfaceHeader               surfaceShape1.header
+typed : nurbsSurface                     makeNurbCone1.outputSurface
+typed : LineModifier                     lineModifierShape1.outLineModifier
+typed : newParticles                     instancer1.inputPoints
+typed : sphere                           sphereShape1.sphere
+typed : cone                             coneShape1.cone
+typed : box                              boxShape1.box
+typed : HairRenderInfo                   hairSystemShape1.outputRenderHairs
+typed : HairPin                          hairConstraintShape1.outPin
+typed : dataPolyComponent                polySurfaceShape1.creaseData
+typed : sweptGeometry                    geoConnector1.sweptGeometry
+typed : HairCurve                        follicleShape1.outHair
+typed : TdataMetadata                    editMetadata1.outData
+typed : Nid                              dynamicConstraintShape1.evalStart
+typed : clip                             clipGhostShape1.clipData
+typed : DynBrush                         brush1.outBrush
+typed : mesh                             blendColorSets1.output
+typed : nurbsCurve                       bezierCurveToNurbs1.inputCurve
+typed : nurbsCurveHeader                 bezierShape1.header
+typed : vectorArray                      arrayMapper1.outColorPP
+typed : doubleArray                      animCurveTA1.outStippleRange
+typed : function                         animBlend1.blend
+typed : typeFailed                       aimConstraint1.publishedNodeType
+typed : matrix                           addMatrix1.matrixSum
+typed : TdataCompound                    addMatrix1.matrixIn
+typed : floatArray                       Unfold3DOptimize1.memusexported
+typed : Int32Array                       Unfold3DOptimize1.memuvcountexport
+typed : stringArray                      ShaderfxShader1.varyingParameters
+typed : HIKPropertySetState              HIKProperty2State1.OutputPropertySetState
+typed : HIKEffectorState                 HIKEffector2State1.OutputEffectorState
+typed : noType                           HIKCharacterStateClient1.InputCharacterDefinition
+typed : HIKCharacter                     HIKCharacterNode1.OutputCharacterDefinition
+short : short                            AISEnvFacade1.antiAliasingQuality
+short : TdataCompound                    clipScheduler1.track
+short : typeFailed                       AISEnvFacade1.extraLightShadowSmoothness
+float : float                            AISEnvFacade1.testAntiAliasingQuality
+float : TdataCompound                    attrHierarchyTest1.multi
+float : typeFailed                       AISEnvFacade1.extraLightIntensity
+float3 : float3                          AISEnvFacade1.backgroundColor
+float3 : TdataCompound                   cMuscleDisplay1.ptPos
+float3 : typeFailed                      AISEnvFacade1.extraLightColor
+compound : TdataCompound                 AISEnvFacade1.extraLightInfo
+compound : typeFailed                    aimConstraint1.objectGroups
+double : typeFailed                      AISEnvFacade1.extraLightShadowWidth
+double : TdataCompound                   HIKEffector2State1.HipsEffectorReachT
+double : double                          ComputeGlobal1.scaleX
+doubleLinear : doubleLinear              ComputeGlobal1.translateX
+doubleLinear : TdataCompound             blendDevice1.inputLinear
+doubleLinear : typeFailed                HIKEffector2State1.HipsEffectorPivotX
+doubleAngle : doubleAngle                ComputeGlobal1.rotateX
+doubleAngle : TdataCompound              blendDevice1.inputAngle
+doubleAngle : typeFailed                 animCurveTA1.keyValue
+matrix : matrix                          ComputeGlobal1.PGX
+matrix : typeFailed                      cMuscleCreator1.insertMatrix
+matrix : TdataCompound                   HIKEffector2State1.HipsEffectorGX
+long : long                              CustomRigDefaultMappingNode1.identifier
+long : TdataCompound                     bevelPlus1.count
+long : typeFailed                        aimConstraint1.objectGroupId
+generic : noType                         HIKCharacterStateClient1.output
+generic : Nobject                        nClothShape1.currentState
+generic : generic                        mute1.output
+generic : Nid                            hairSystemShape1.nucleusId
+generic : mesh                           geoConnector1.localGeometry
+generic : typeFailed                     cMuscleKeepOut1.meshIn
+generic : TdataCompound                  cMuscleDisplace1.curves
+double3 : double3                        aimConstraint1.boundingBoxMin
+double3 : TdataCompound                  bevelPlus1.position
+double3 : typeFailed                     aimConstraint1.targetTranslate
+time : time                              aimConstraint1.ghostRangeStart
+time : TdataCompound                     character1.timeValues
+time : typeFailed                        airField1.deltaTime
+double4 : double4                        aimConstraint1.rotateQuaternion
+fltMatrix : matrix                       ambientLightShape1.matrixWorldToEye
+addr : addr                              ambientLightShape1.objectId
+addr : typeFailed                        anisotropic1.lightBlindData
+float2 : float2                          ambientLightShape1.uvCoord
+float2 : TdataCompound                   polySurfaceShape1.uvpt
+float2 : typeFailed                      bezierShape1.uvSetPoints
+lightData : TdataCompound                ambientLightShape1.lightData
+char : char                              ambientLightShape1.objectType
+floatAngle : floatAngle                  animBlendNodeAdditiveFA1.inputA
+floatAngle : TdataCompound               wire1.wireLocatorTwist
+floatLinear : floatLinear                animBlendNodeAdditiveFL1.inputA
+floatLinear : typeFailed                 polySurfaceShape1.pntx
+double2 : double2                        bezierShape1.uvPivot
+double2 : TdataCompound                  texLattice1.latticePoint
+double2 : typeFailed                     pointOnPolyConstraint1.targetUV
+long3 : long3                            blendShape1.function
+long3 : typeFailed                       polySurfaceShape1.edge
+long3 : TdataCompound                    fluidEmitter1.randState
+short2 : short2                          greasePlaneShape1.coverage
+polyFaces : typeFailed                   polySurfaceShape1.face
+long2 : long2                            hardwareRenderingGlobals1.motionBlurMultiframeChartSize
+long2 : TdataCompound                    subdivToPoly1.outSubdCVId
+
+
+*/
+
+//________________________________________________________________________
+//
+//
