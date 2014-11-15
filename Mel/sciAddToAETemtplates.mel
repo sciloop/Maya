@@ -1,0 +1,821 @@
+//
+//
+// The attributes which are added to the default AETemplates by sciloop.
+//
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAETemplatesSourced()
+{
+    print(  " // sciloop message: mel: file"+
+            " 'sciAddToAETemplates.mel' sourced.\n" );
+}
+sciAddToAETemplatesSourced();
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAETemplates()
+{}
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEmeshTemplate()
+{
+    print(  " // sciloop message: mel: modified Maya file"+
+            " 'AEmeshTemplate.mel' sourced.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+		//editorTemplate -callCustom ( "AEinputNew instObjGroups" )
+         //       ("AEinputReplace instObjGroups")
+          //      "instObjGroups";
+                editorTemplate( "-addControl", "instObjGroups" );
+                editorTemplate( "-addControl", "compInstObjGroups" );
+                //editorTemplate -addControl "objectGroupId";
+                //editorTemplate -addControl "objectGrpCompList";
+                //editorTemplate -addControl "objectGroups[0].objectGroupId";
+                //editorTemplate -addControl "objectGroups.objectGroupId";
+                //editorTemplate -addControl "instObjGroups[0].objectGroups[0].objectGroupId";
+                //editorTemplate -addControl "instObjGroups[0].objectGroups[0].objectGrpColor";
+	editorTemplate( "-endLayout" );
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+// Reason for editing 'AElightLinkerTemplate' :
+// Make the 'link' and 'ignore' attributes visible in the AE.
+//
+global proc sciAddToAElightLinkerTemplate()
+{
+	print(  " // sciloop message: mel: modified Maya file"+
+          	" 'AElightLinkerTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+		editorTemplate( "-addControl", "link" );
+		editorTemplate( "-addControl", "ignore" );
+		editorTemplate( "-addControl", "shadowLink" );
+		editorTemplate( "-addControl", "shadowIgnore" );
+	editorTemplate( "-endLayout" );
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+// Reason for editing 'AEpolyPlanarProjTemplate' :
+// Show other attributes in the AE.
+//
+global proc sciAddToAEpolyPlanarProjTemplate()
+{
+	   print(	" // sciloop message: mel: modified Maya file"+
+				" 'AEpolyPlanarProjTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+		editorTemplate( "-addControl", "portLeft" );
+		editorTemplate( "-addControl", "portRight" );
+		editorTemplate( "-addControl", "portTop" );
+		editorTemplate( "-addControl", "portBottom" );
+		editorTemplate( "-addControl", "worldSpace" );
+		editorTemplate( "-addControl", "isPerspective" );
+		editorTemplate( "-addControl", "uvSetName" );
+
+		editorTemplate -callCustom ("AEinputNew "+"inputPolymesh")
+									("AEinputReplace "+"inputPolymesh")
+									"inputPolymesh";
+
+		editorTemplate -callCustom ("AEinputNew "+"inputComponents")
+									("AEinputReplace "+"inputComponents")
+									"inputComponents";
+
+
+
+		editorTemplate -callCustom ("AEinputNew "+"cameraMatrix")
+									("AEinputReplace "+"cameraMatrix")
+									"cameraMatrix";
+
+	editorTemplate( "-endLayout" );
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+// Reason for editing 'AEresolutionTemplate' :
+// Make Maya not complain when 'deviceAspectRatio' is connected.
+//
+global proc int sciAddToAEResolutionTemplate( string $nodeName )
+{
+	 print(	" // sciloop message: mel: modified Maya file"+
+			" 'AEresolutionTemplate.mel'.\n" );
+
+	if( connectionInfo( "-isDestination", ($nodeName+".deviceAspectRatio") ) )
+	{return 1;}
+	else
+	{return 0;}
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+// Reason for editing 'AErenderTargetTemplate' :
+// Show more attribute types in the AE.
+//
+global proc sciAddToAErenderTargetTemplate()
+{
+	 print(	" // sciloop message: mel: modified Maya file"+
+			" 'AErenderTargetTemplate.mel'.\n" );
+
+ 	editorTemplate( "-addControl", "color" );
+ 	editorTemplate( "-addControl", "alpha" );
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+// Reason for editing 'AErampTemplate' :
+// Make 'colorEntryList' visible in the AE.
+//
+global proc sciAddToAErampTemplate()
+{
+	print(  " // sciloop message: mel: modified Maya file"+
+         	" 'AErampTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+		editorTemplate( "-addControl", "colorEntryList" );
+	editorTemplate( "-endLayout" );
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+// Reason for editing 'AEnParticleTemplate' :
+// Make visible 'instancer' related attributes : 'instanceData'.
+//
+global proc	sciAddToAEnParticleTemplate()
+{
+	print(  " // sciloop message: mel: modified Maya file"+
+         	" 'AEnParticleTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+		editorTemplate( "-addControl", "instanceData" );
+		editorTemplate( "-addControl", "instancePointData" );
+	editorTemplate( "-endLayout" );
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+// Reason for editing 'AElayeredTextureTemplate' :
+// Make the 'inputs' visible in the AE.
+//
+global proc sciAddToAElayeredTextureTemplate()
+{
+	print(  " // sciloop message: mel: modified Maya file"+
+			" 'AElayeredTextureTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+		editorTemplate( "-addControl", "inputs" );
+	editorTemplate( "-endLayout" );
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+// Maya uses '_' to check for equality of old and new instancers.
+// This does not work when the instancer has '_' in its name itself.
+// So, do a alternative check for equality here:
+//
+global proc sciAddToAEdynParticleInstancerNew1(	string $instancerNodes[],
+												string $oldInstancerList[],
+												int $numTokens,
+												string $temp[],
+												int $i )
+{
+    print(  " // sciloop message: mel: modified Maya file"+
+            " 'AEdynParticleInstancerNew.mel'.\n" );
+
+	int $deleteString = true;
+
+	// For every current instancer.
+	//
+	for( $k=0; $k<size( $instancerNodes ); $k++ )
+	{
+		string $buffer[] = {};
+		int $toki = tokenize( $instancerNodes[$k], "_", $buffer );
+		int $p=0;
+		int $isIdentical = true;
+
+		for( $m=$toki-1; $m>=0; $m-- )
+		{
+			if( $buffer[$m]!=$temp[$numTokens-1-$p] )
+			{
+				$isIdentical = false;
+				break;
+			}
+			$p++;
+		}
+
+		if( $isIdentical==true )
+		{
+			$deleteString = false;
+			break;
+		}
+	}
+
+	if( $deleteString==true )
+	{
+//print( $sn+" delete old val : "+$oldInstancerList[$i]+"\n" );
+		deleteUI $oldInstancerList[$i];
+	}
+}
+
+//___________________________________________________________________________
+//
+//
+global proc string sciAddToAEdynParticleInstancerNew2( string $nodeName )
+{
+	string $sn = " // sciloop message: mel : 'AEinstancerNodeChanged' :";
+
+//print( $sn+" Maya provided nodeName = "+$nodeName+"\n" );
+
+	string $sel[] = ls( "-sl", "-l" );
+
+	if( nodeType( $sel[0] )=="particle" || nodeType( $sel[0] )=="nParticle" )
+	{
+		$nodeName = $sel[0];
+		print( $sn+" Choose my selected node instead : "+$nodeName+"\n" );
+	}
+	else if( nodeType( $sel[0] )=="transform" )
+	{
+		string $particle[] = listRelatives( "-type", "nParticle", $sel[0] );
+		if( size( $particle ) )
+		{
+			$nodeName = $particle[0];
+			print( $sn+" Choose my selected node instead : "+$nodeName+"\n" );
+		}
+	}
+	else
+	{
+		print( $sn+" ALERT : nodeType from selection"+
+				" is not particle or nParticle but "+
+				nodeType( $sel[0]+"\n" ) );
+	}
+
+	return $nodeName;
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEgroupIdTemplate()
+{
+    print(	" // sciloop message: mel: modified Maya file"+
+ 			" 'sciAddToAEgroupIdTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+		editorTemplate( "-addControl", "groupId" );
+	editorTemplate( "-endLayout" );
+}
+
+
+//###########################################################################
+
+
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEpolyUniteTemplate()
+{
+    print(  " // sciloop message: mel: modified Maya file"+
+            " 'sciAddToAEpolyUniteTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+		editorTemplate -callCustom ("AEinputNew "+"inputPoly")
+								("AEinputReplace "+"inputPoly")
+								"inputPoly";
+	editorTemplate( "-endLayout" );
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+//
+global proc AEdependNodeSciListAttributesCreate( string $plug )
+{
+	string $buffer[] = {};
+	tokenize( $plug, ".", $buffer );
+	string $node = (size($buffer) > 0) ? $buffer[0] : "";
+	string $nodeType = nodeType( $node );
+
+	separator(	"-style", "none",
+				"-width", 490,
+				"-height", 10 );
+
+	rowLayout( "-numberOfColumns", 2,
+				"-columnWidth", 2, 120 );
+
+		text( "-label", "" );
+
+		button -label	"display attribute values"
+		  	   -command	("sciListAttributes({\""+$node+"\"});")
+		    	($nodeType+"sciListAttributesButton");
+
+	setParent ..;
+
+	separator(	"-style", "none",
+				"-width", 490,
+				"-height", 10 );
+
+	AEdependNodeSciListAttributesReplace( $plug );
+}
+
+//___________________________________________________________________________
+//
+//
+global proc AEdependNodeSciListAttributesReplace( string $plug )
+{
+	string $buffer[] = {};
+	tokenize( $plug, ".", $buffer );
+	string $node = (size($buffer) > 0) ? $buffer[0] : "";
+	string $nodeType = nodeType( $node );
+
+	button -edit
+		   -command	("sciListAttributes({\""+$node+"\"});")
+			($nodeType+"sciListAttributesButton");
+}
+
+//___________________________________________________________________________
+//
+//
+global proc AEdependNodeSciListDirtyStatusCreate( string $plug )
+{
+	string $buffer[] = {};
+	tokenize( $plug, ".", $buffer );
+	string $node = (size($buffer) > 0) ? $buffer[0] : "";
+	string $nodeType = nodeType( $node );
+
+	separator( "-style", "none",
+				"-width", 490,
+				"-height", 10 );
+
+	rowLayout( "-numberOfColumns", 2,
+				"-columnWidth", 2, 120 );
+
+		text( "-label", "" );
+
+		button -label	"display dirty status"
+		  	   -command	("sciListDirtyStatus({\""+$node+"\"});")
+		    	($nodeType+"sciListDirtyStatusButton");
+
+	setParent ..;
+
+	separator(	"-style", "none",
+				"-width", 490,
+				"-height", 10 );
+
+	AEdependNodeSciListDirtyStatusReplace( $plug );
+
+}
+
+//___________________________________________________________________________
+//
+//
+global proc AEdependNodeSciListDirtyStatusReplace( string $plug )
+{
+	string $buffer[] = {};
+	tokenize( $plug, ".", $buffer );
+	string $node = (size($buffer) > 0) ? $buffer[0] : "";
+	string $nodeType = nodeType( $node );
+
+	button -edit
+		   -command	("sciListDirtyStatus({\""+$node+"\"});")
+			($nodeType+"sciListDirtyStatusButton");
+}
+
+//___________________________________________________________________________
+//
+//
+global proc AEdependNodeSciListConnectionsCreate( string $plug )
+{
+	string $buffer[] = {};
+	tokenize( $plug, ".", $buffer );
+	string $node = (size($buffer) > 0) ? $buffer[0] : "";
+	string $nodeType = nodeType( $node );
+
+	separator( "-style", "none",
+				"-width", 490,
+				"-height", 10 );
+
+	rowLayout( "-numberOfColumns", 2,
+				"-columnWidth", 2, 120 );
+
+		text( "-label", "" );
+
+		button -label	"display connections"
+		  	   -command	("sciListConnections({\""+$node+"\"});")
+		    	($nodeType+"sciListConnectionsButton");
+
+	setParent ..;
+
+	separator( "-style", "none",
+				"-width", 490,
+				"-height", 10 );
+
+	AEdependNodeSciListConnectionsReplace( $plug );
+}
+//___________________________________________________________________________
+//
+//
+global proc AEdependNodeSciListConnectionsReplace( string $plug )
+{
+	string $buffer[] = {};
+	tokenize( $plug, ".", $buffer );
+	string $node = (size($buffer) > 0) ? $buffer[0] : "";
+	string $nodeType = nodeType( $node );
+
+	button -edit
+		   -command	("sciListConnections({\""+$node+"\"});")
+			($nodeType+"sciListConnectionsButton");
+}
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEdependNodeTemplate()
+{
+    // Simple choose a attribute that every node has : 'caching'.
+    //
+	editorTemplate(	"-beginLayout",	"sciloop show node data", "-collapse", 0 );
+		editorTemplate( "-callCustom", "AEdependNodeSciListDirtyStatusCreate",
+                      	"AEdependNodeSciListDirtyStatusReplace",
+					   	"caching" );
+		editorTemplate( "-callCustom", "AEdependNodeSciListAttributesCreate",
+					   	"AEdependNodeSciListAttributesReplace",
+					   	"caching" );
+		editorTemplate( "-callCustom", "AEdependNodeSciListConnectionsCreate",
+			   			"AEdependNodeSciListConnectionsReplace",
+			   			"caching" );
+	editorTemplate( "-endLayout" );
+
+}
+
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEshadingEngineTemplate()
+{
+    print(  " // sciloop message: mel: modified Maya file"+
+            " 'AEshadingEngineTemplate.mel'.\n" );
+
+    editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+        //editorTemplate( "-addControl" "usedBy";
+
+		editorTemplate(	"-beginLayout",	"linkedLights", "-collapse", 1 );
+			editorTemplate( "-addControl", "linkedLights" );
+			editorTemplate -callCustom ("AEinputNew "+"linkedLights")
+										("AEinputReplace "+"linkedLights")
+										"linkedLights";
+		editorTemplate( "-endLayout" );
+
+
+		editorTemplate(	"-beginLayout",	"ignoredLights", "-collapse", 1 );
+			editorTemplate( "-addControl", "ignoredLights" );
+			editorTemplate -callCustom ("AEinputNew "+"ignoredLights")
+										("AEinputReplace "+"ignoredLights")
+										"ignoredLights";
+		editorTemplate( "-endLayout" );
+
+
+		editorTemplate(	"-beginLayout",	"linkedShadows", "-collapse", 1 );
+			editorTemplate( "-addControl", "linkedShadows" );
+			editorTemplate -callCustom ("AEinputNew "+"linkedShadows")
+										("AEinputReplace "+"linkedShadows")
+										"linkedShadows";
+		editorTemplate( "-endLayout" );
+
+
+		editorTemplate(	"-beginLayout",	"ignoredShadows", "-collapse", 1 );
+			editorTemplate( "-addControl", "ignoredShadows" );
+			editorTemplate -callCustom ("AEinputNew "+"ignoredShadows")
+										("AEinputReplace "+"ignoredShadows")
+										"ignoredShadows";
+		editorTemplate( "-endLayout" );
+
+
+		editorTemplate(	"-beginLayout",	"groupNodes", "-collapse", 1 );
+			editorTemplate( "-addControl", "groupNodes" );
+			editorTemplate -callCustom ("AEinputNew "+"groupNodes")
+										("AEinputReplace "+"groupNodes")
+										"groupNodes";
+		editorTemplate( "-endLayout" );
+
+
+		editorTemplate(	"-beginLayout",	"dagSetMembers", "-collapse", 1 );
+			editorTemplate( "-addControl", "dagSetMembers" );
+			editorTemplate -callCustom ("AEinputNew "+"dagSetMembers")
+										("AEinputReplace "+"dagSetMembers")
+										"dagSetMembers";
+		editorTemplate( "-endLayout" );
+
+
+		editorTemplate(	"-beginLayout",	"dnSetMembers", "-collapse", 1 );
+			editorTemplate( "-addControl", "dnSetMembers" );
+			editorTemplate -callCustom ("AEinputNew "+"dnSetMembers")
+										("AEinputReplace "+"dnSetMembers")
+										"dnSetMembers";
+		editorTemplate( "-endLayout" );
+
+    editorTemplate( "-endLayout" );
+
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEchoiceTemplate()
+{
+    print(  " // sciloop message: mel: modified Maya file"+
+            " 'AEchoiceTemplate.mel'.\n" );
+
+    editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+        editorTemplate( "-addControl", "input" );
+        editorTemplate -callCustom ("AEinputNew "+"input")
+										("AEinputReplace "+"input")
+										"input";
+
+
+       		//editorTemplate(	"-beginLayout",	"groupNodes", "-collapse", 0 );
+			//editorTemplate -callCustom ("AEinputNew "+"groupNodes")
+				//						("AEinputReplace "+"groupNodes")
+					//					"groupNodes";
+		//editorTemplate -endLayout;
+
+    editorTemplate( "-endLayout" );
+}
+
+
+//###########################################################################
+
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAERenderLayerTemplate()
+{
+
+// sciloop info:
+// The shadingNodes which are connected to the currently active renderLayer node
+// are evaluated.
+// A shape node is connected to renderLayer nodes. When a renderLayer node
+// is activated, if forces the shadingGrop-connection from the shape node to turn
+// to the shadingGroup which is also connected to the active renderLayer node.
+//
+// To be visible in the current renderLayer at all, the corresponding transform
+// node it connected to the renderLayer node, too. This connection is established
+// when a DAG object is added to the renderLayer node.
+//
+// the index from 'renderLayer.outAdjustments[$i].outPlug' must equal the index
+// from 'renderLayer.outAdjustments[$i].outValue' :
+// mesh.instObjGroups[0] -> renderLayer.outAdjustments[2].outPlug;
+// renderLayer.outAdjustments[2].outValue -> shadingEngine.dagSetMembers[1];
+//
+// example :
+//
+// mesh.instObjGroups[instanceIndex]       -> renderLayer.outAdjustments[$i].outPlug
+// renderLayer.outAdjustmenst[$i].outValue -> shadingEngine.dagSetMembers[someIndex]
+// renderLayer.renderInfo                  -> transform.renderLayerInfo[someIndex]
+//
+// if the renderLayer is active :
+// mesh.instObjGroups[instanceIndex]       -> shadingEngine.dagSetMembers[someIndex]
+
+
+	print(  " // sciloop message: mel: modified Maya file"+
+            " 'AErenderLayerTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+        editorTemplate( "-addControl", "renderPassInfo" );
+		editorTemplate( "-addControl", "renderInfo" );
+		editorTemplate( "-addControl", "psdBlendMode" );
+		editorTemplate( "-addControl", "psdAlphaChannel" );
+		editorTemplate( "-addControl", "adjustments" );
+		editorTemplate( "-addControl", "outAdjustments" );
+		 editorTemplate -callCustom ("AEinputNew "+"outAdjustments")
+										("AEinputReplace "+"outAdjustments")
+										"outAdjustments";
+		editorTemplate( "-addControl", "displayOrder" );
+		editorTemplate( "-addControl", "shadingGroupOverride" );
+		editorTemplate( "-addControl", "attributeOverrideScript" );
+		editorTemplate( "-addControl", "layerParent" );
+		editorTemplate( "-addControl", "layerChildren" );
+		editorTemplate( "-addControl", "mentalRayControls" );
+	    editorTemplate( "-addControl", "precompTemplate" );
+	    editorTemplate( "-addControl", "defaultPrecompTemplate" );
+	    editorTemplate( "-addControl", "renderInfo" );
+
+
+    editorTemplate( "-endLayout" );
+}
+
+//___________________________________________________________________________
+//
+//
+
+//###########################################################################
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEhyperLayoutTemplate()
+{
+	print(  " // sciloop message: mel: modified Maya file"+
+            " 'AEhyperLayoutTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+        editorTemplate( "-addControl", "allNodesFreeform" );
+        editorTemplate( "-addControl", "hyperPosition" );
+   editorTemplate( "-endLayout" );
+}
+
+//___________________________________________________________________________
+//
+//
+
+//###########################################################################
+//
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEpolyBridgeEdgeTemplate()
+{
+	print(  " // sciloop message: mel: modified Maya file"+
+            " 'AEpolyBridgeEdgeTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+        editorTemplate( "-addControl", "inputComponents" );
+		editorTemplate( "-addControl", "startEdge1" );
+		editorTemplate( "-addControl", "startEdge2" );
+		editorTemplate( "-addControl", "inputProfile" );
+		editorTemplate( "-addControl", "worldSpace" );
+   editorTemplate( "-endLayout" );
+}
+
+//___________________________________________________________________________
+//
+//
+
+//###########################################################################
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEexpressionTemplate()
+{
+	print(  " // sciloop message: mel: modified Maya file"+
+            " 'AEexpressionTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+        editorTemplate( "-addControl", "input" );
+		editorTemplate( "-addControl", "output" );
+   editorTemplate( "-endLayout" );
+}
+
+//___________________________________________________________________________
+//
+//
+
+//###########################################################################
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEobjectSetTemplate()
+{
+	print(  " // sciloop message: mel: modified Maya file"+
+            " 'AEobjectSetTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+       	editorTemplate( "-addControl", "annotation" );
+		editorTemplate( "-addControl", "partition" );
+		editorTemplate( "-addControl", "isLayer" );
+		editorTemplate( "-addControl", "verticesOnlySet" );
+		editorTemplate( "-addControl", "edgesOnlySet" );
+		editorTemplate( "-addControl", "facetsOnlySet" );
+		editorTemplate( "-addControl", "editPointsOnlySet" );
+		editorTemplate( "-addControl", "renderableOnlySet" );
+		//editorTemplate( "-addControl", "usedBy" );
+
+		editorTemplate(	"-beginLayout",	"groupNodes", "-collapse", 0 );
+		editorTemplate( "-addControl", "groupNodes" );
+			editorTemplate -callCustom ("AEinputNew "+"groupNodes")
+										("AEinputReplace "+"groupNodes")
+										"groupNodes";
+		editorTemplate( "-endLayout" );
+
+		editorTemplate(	"-beginLayout",	"dagSetMembers", "-collapse", 0 );
+		editorTemplate( "-addControl", "dagSetMembers" );
+			editorTemplate -callCustom ("AEinputNew "+"dagSetMembers")
+										("AEinputReplace "+"dagSetMembers")
+										"dagSetMembers";
+		editorTemplate( "-endLayout" );
+
+		editorTemplate(	"-beginLayout",	"dnSetMembers", "-collapse", 0 );
+		editorTemplate( "-addControl", "dnSetMembers" );
+			editorTemplate -callCustom ("AEinputNew "+"dnSetMembers")
+										("AEinputReplace "+"dnSetMembers")
+										"dnSetMembers";
+		editorTemplate( "-endLayout" );
+
+   editorTemplate( "-endLayout" );
+}
+
+//___________________________________________________________________________
+//
+//
+
+//###########################################################################
+
+//___________________________________________________________________________
+//
+//
+global proc sciAddToAEgeoConnectorTemplate( string $nodeName )
+{
+	print(  " // sciloop message: mel: modified Maya file"+
+            " 'AEgeoConnectorTemplate.mel'.\n" );
+
+	editorTemplate( "-beginLayout", "sciloop add", "-collapse", 0 );
+
+		// include/call base class/node attributes
+		//
+		AEdependNodeTemplate( $nodeName );
+
+        editorTemplate( "-addControl", "currentTime" );
+		editorTemplate( "-addControl", "nodeState" );
+		editorTemplate( "-addControl", "caching" );
+		editorTemplate( "-addControl", "inputForce" );
+   editorTemplate( "-endLayout" );
+}
+
+//___________________________________________________________________________
+//
+//
+
+//###########################################################################
+
+//___________________________________________________________________________
+//
+//
+
+
+
+
+
+
+
+
+
+
