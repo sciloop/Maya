@@ -1,6 +1,8 @@
 //
+// creator : sciloop
 //
-// Get the process ID of Maya.
+// Get the process ID of Maya
+// and display it in the output window.
 
 #include <afxwin.h>
 #include <maya/MGlobal.h>
