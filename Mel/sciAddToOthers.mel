@@ -1,0 +1,111 @@
+//
+// creator : sciloop
+//
+// file for procs which change the scripts in Mayas` 'others' folder.
+//
+//
+//_______________________________________________________________________________
+//
+global proc sciAddToOthersSourced()
+{
+	print(	" // sciloop message: mel: file"+
+			" 'sciAddToOthers.mel' sourced.\n" );
+}
+sciAddToOthersSourced();
+
+global proc sciAddToOthers()
+{}
+
+//_______________________________________________________________________________
+//
+// updateAE changes:
+//
+global proc sciAddToUpdateAE( string $node )
+{
+	global string $gAERootPaneLayoutName;
+
+	if( nodeType( $node )=="sceneInfo" ||
+		nodeType( $node )=="containerInfo"  )
+	{paneLayout( "-e", "-paneSize", 1, 100, 0, $gAERootPaneLayoutName );}
+	else
+	{paneLayout( "-e", "-paneSize", 2, 100, 1, $gAERootPaneLayoutName );}
+}
+
+//_______________________________________________________________________________
+//
+// hyperShadePanel changes:
+//
+// sciUpAndDownstreamByName( "node" );
+//
+global proc sciUpAndDownstreamByName( string $nodeName )
+{
+	string $sn = " // mel : 'sciUpAndDownstreamByName' : ";
+
+	if( objExists( $nodeName ) )
+	{
+		sciHyperShadePanelGraphCommand(	"hyperShadePanel1",
+										"showUpAndDownstream",
+										$nodeName );
+	}
+	else
+	{
+		print(	$sn+" The input name :"+ $nodeName+
+				" is not a node. Terminate script!\n" );
+	}
+}
+
+
+//____________________________________________________________________________
+//
+// Determine which graph tab (work area) would be the most appropriate
+// tab to perform this operation in. This will be called the target tab.
+//
+global proc sciHyperShadePanelGraphCommand(	string $panel,
+											string $command,
+											string $nodeName )
+{
+	string $targetTab;
+
+	$targetTab = targetGraphTab( $panel );
+
+	// Get the name of the hypershade in the target graph tab so that we
+	// can graph into it.
+	//
+	string $graphUI;
+
+	$graphUI = lookupComponentName( $targetTab );
+
+	// Select the tab so the user can see the graph.
+	//
+	selectTab($panel, $targetTab);
+	string $nothingSelected = (uiRes("m_hyperShadePanel.kNothingSelected"));
+
+	if( $command=="showUpAndDownstream" )
+	{
+		if( size(ls("-sl"))!=0 )
+		{graphUIShowUpAndDownstream($graphUI);}
+		else
+		{warning $nothingSelected;}
+	}
+	else if( $command=="showUpstream" )
+	{
+		if( size(ls("-sl"))!=0 )
+		{graphUIShowUpstream($graphUI);}
+		else
+		{warning $nothingSelected;}
+	}
+	else if( $command=="showDownstream" )
+	{
+		if( size(ls("-sl"))!=0 )
+		{graphUIShowDownstream($graphUI);}
+		else
+		{warning $nothingSelected;}
+	}
+
+	refreshToolbar( $panel );
+	refreshGraphMenu( $panel );
+}
+
+//_______________________________________________________________________________
+//
+//
