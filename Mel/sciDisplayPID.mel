@@ -1,0 +1,38 @@
+//
+// creator : sciloop
+//
+// Put the Maya process ID in the title of the outputWindow.
+//
+//
+//____________________________________________________________________________
+//
+//
+global proc sciDisplayPIDSourced()
+{
+    print( " // sciloop message: mel: file 'sciDisplayPID.mel' sourced.\n" );
+}
+sciGetPIDtSourced();
+
+//____________________________________________________________________________
+//
+//
+global proc sciDisplayPID()
+{
+    string $sn = " // sciloop message: mel : 'sciDisplayPID' : ";
+
+	if( catchQuiet( $pluginName = loadPlugin( "-quiet", "displayPID" ) ) )
+    {
+		print(	$sn+" the plugin: 'displayPID' " +
+				" could not be found in the plugin search paths.\n" );
+    }
+    else
+    {
+    	displayPID();
+
+    	print( $sn+" command 'displayPID' added to the scene.\n" );
+    }
+}
+
+//____________________________________________________________________________
+//
+//
