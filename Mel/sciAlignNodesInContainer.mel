@@ -614,6 +614,15 @@ global proc sciAlignNodesInContainer(   string $align,
         return;
     }
 
+    if( exists("sciGetSelectedNodeTypes") )
+    {source "sciGetSelectedNodeTypes";}
+    else
+    {
+        print( $sn+ "could not find proc : 'sciGetSelectedNodeTypes'."+
+                " Terminate script.\n" );
+        return;
+    }
+
     string $sel[] = {};
 
     if( size($nodeTypes)==0 )
