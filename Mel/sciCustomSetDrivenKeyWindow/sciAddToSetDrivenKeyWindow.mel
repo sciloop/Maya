@@ -1,0 +1,465 @@
+//
+// creator : sciloop
+//
+// last update: 2013_09_09
+//
+// support scripts for : 'setDrivenKeyWindow'.
+// Support for applying setDrivenKeys on
+// animation layers.
+//
+
+//________________________________________________________________________________
+//
+//
+global proc sciAddToSetDrivenKeyWindowSourced()
+{
+    print(  " // sciloop message: mel: file"+
+            " 'sciAddToSetDrivenKeyWindow.mel' sourced.\n" );
+}
+sciAddToSetDrivenKeyWindowSourced();
+
+global proc sciAddToSetDrivenKeyWindow()
+{}
+
+//_______________________________________________________________________________
+//
+//
+global proc string sciGetActiveAnimLayer()
+{
+
+    string $sn = " // sciloop message : mel :"+
+                " 'sciGetActiveAnimLayer' :";
+
+    string $animLayerNodes[] = ls( "-type", "animLayer" );
+    int $sizeAnimLayer = size( $animLayerNodes );
+    string $activeLayer = "";
+    int $i;
+
+    for( $i=0; $i<$sizeAnimLayer; $i++ )
+    {
+        int $isActiveLayer = animLayer( "-q",
+                                        "-selected",
+                                        $animLayerNodes[$i] );
+        if( $isActiveLayer )
+        {
+            $activeLayer = $animLayerNodes[$i];
+            break;
+        }
+    }
+
+    if( $activeLayer=="" )
+    {}
+
+    return $activeLayer;
+}
+
+//_______________________________________________________________________________
+//
+//
+global proc int sciGetAttrIncludedInAnimLayerInfo(  string $objectName,
+                                                    string $activeAnimLayer )
+{
+
+    string $sn = " // sciloop message : mel :"+
+                " 'sciGetAttrIncludedInAnimLayerInfo' :";
+
+    string $attribute[] = animLayer( "-q", "-attribute", $activeAnimLayer );
+    int $sizeAttribute = size( $attribute );
+    int $attrIsIncludedInLayer = false;
+
+    for( $i=0; $i<$sizeAttribute; $i++ )
+    {
+        string $tmp[] = ls( "-l", $attribute[$i] );
+        if( $objectName==$tmp[0] )
+        {$attrIsIncludedInLayer = true;}
+    }
+
+    return $attrIsIncludedInLayer;
+}
+
+//_______________________________________________________________________________
+//
+//
+global proc string sciGetAttrBlendNode( string $objectName,
+                                        string $activeAnimLayer,
+                                        string $blendNodesForAttr[] )
+{
+
+    string $sn = " // sciloop message : mel :"+
+                 " 'sciGetAttrBlendNode' :";
+
+    int $sizeBlendNodes = size( $blendNodesForAttr );
+    int $i;
+    string $blendNodeName = "";
+
+    for( $i=0; $i<$sizeBlendNodes; $i++ )
+    {
+        $isConnected = isConnected( $activeAnimLayer+".foregroundWeight",
+                                    $blendNodesForAttr[$i]+".weightB" );
+        if( $isConnected )
+        {
+            $blendNodeName = $blendNodesForAttr[$i];
+            break;
+        }
+    }
+
+    return $blendNodeName;
+}
+
+//_______________________________________________________________________________
+//
+//
+global proc string[] sciGetAnimLayersWithAttr( string $objectName )
+{
+    string $sn = " // sciloop message : mel :"+
+                    " 'sciGetAnimLayersWithAttr' :";
+
+    string $conn[] = listConnections(   "-d", on,
+                                        "-s", off,
+                                        "-plugs", off,
+                                        $objectName );
+    int $connSize = size( $conn );
+    string $layerNames[];
+
+    for( $i=0, $k=0; $i<$connSize; $i++ )
+    {
+        if( nodeType($conn[$i])=="animLayer" )
+        {
+            $layerNames[$k] = $conn[$i];
+            $k++;
+        }
+    }
+
+    return $layerNames;
+}
+
+//_______________________________________________________________________________
+//
+//
+global proc string[] sciGetBlendNodesForAttribute( string $objectName )
+{
+
+    string $sn = " // sciloop message : mel :"+
+                    " 'sciGetBlendNodesForAttribute' :";
+
+    string $conns[] = listConnections(  "-d",       off,
+                                        "-s",       on,
+                                        "-plugs",   off,
+                                        $objectName );
+    string $conn = $conns[0];
+
+    if( nodeType( $conn )=="blendWeighted" )
+    {}
+
+    string $blendNodeType;
+
+    if( nodeType( $conn )=="animBlendNodeAdditive" )
+    {$blendNodeType = "animBlendNodeAdditive";}
+    else if ( nodeType( $conn )=="animBlendNodeAdditiveDA" )
+    {$blendNodeType = "animBlendNodeAdditiveDA";}
+    else if ( nodeType( $conn )=="animBlendNodeAdditiveDL" )
+    {$blendNodeType = "animBlendNodeAdditiveDL";}
+    else if ( nodeType( $conn )=="animBlendNodeAdditiveF" )
+    {$blendNodeType = "animBlendNodeAdditiveF";}
+    else if ( nodeType( $conn )=="animBlendNodeAdditiveFA" )
+    {$blendNodeType = "animBlendNodeAdditiveFA";}
+    else if ( nodeType( $conn )=="animBlendNodeAdditiveFL" )
+    {$blendNodeType = "animBlendNodeAdditiveFL";}
+    else if ( nodeType( $conn )=="animBlendNodeAdditiveI16" )
+    {$blendNodeType = "animBlendNodeAdditiveI16";}
+    else if ( nodeType( $conn )=="animBlendNodeAdditiveI32" )
+    {$blendNodeType = "animBlendNodeAdditive32";}
+    else if ( nodeType( $conn )=="animBlendNodeAdditiveRotation" )
+    {$blendNodeType = "animBlendNodeAdditiveRotation";}
+    else if ( nodeType( $conn )=="animBlendNodeAdditiveScale" )
+    {$blendNodeType = "animBlendNodeAdditiveScale";}
+	 else if ( nodeType( $conn )=="animBlendNodeBoolean" )
+    {$blendNodeType = "animBlendNodeBoolean";}
+	 else if ( nodeType( $conn )=="animBlendNodeEnum" )
+    {$blendNodeType = "animBlendNodeEnum";}
+
+    if( $blendNodeType=="" )
+    {
+        error( $sn+" cannot find blendNode which inputs"+
+                " attribute value for "+$objectName );
+    }
+
+
+    // Get all connected blendNodes which contribute
+    // to the final attribute value of the node.
+    //
+    int $k=1;
+
+    string $blendNodeNames[];
+    $blendNodeNames[0] = $conn;
+
+    string $connNodeName = $blendNodeNames[0];
+    string $isConnected = 1;
+
+    while( $isConnected )
+    {
+        clear $conns;
+        $conns = listConnections(   "-d", off,
+                                    "-s", on,
+                                    "-plugs", off,
+                                    ($connNodeName+".inputA") );
+        $conn = $conns[0];
+
+        if( $conn=="" )
+        {$isConnected = 0;}
+        else if( nodeType( $conn )==$blendNodeType )
+        {
+            $blendNodeNames[$k] = $conn;
+            $connNodeName = $conn;
+            $k++;
+        }
+    }
+
+    return $blendNodeNames;
+}
+
+//_______________________________________________________________________________
+//
+//
+global proc float sciGetTrueAttributeValueToKey(    string $objectName,
+                                                    string $blendNodeName,
+                                                    string $blendNodesForAttr[],
+                                                    string $blendInputAttr[] )
+{
+    string $sn = " // sciloop message : mel :"+
+                    "'sciAddTrueAttributeValueToAnimCurve' :";
+
+	string $buffer1[] = {};
+	int $numTokens1 = tokenize( $objectName, ".", $buffer1 );
+	string $attrName = $buffer1[$numTokens1-1];
+
+    int $sizeBlendNodes = size( $blendNodesForAttr );
+
+    string $otherBlendNodes[] = {};
+    string $otherAnimLayerNodes[] = {};
+
+    for( $i=0, $k=0; $i<$sizeBlendNodes; $i++ )
+    {
+        if( $blendNodesForAttr[$i]!=$blendNodeName )
+        {
+            $otherBlendNodes[$k] = $blendNodesForAttr[$i];
+            $k++;
+        }
+
+        string $conns[] = listConnections(  "-d", off,
+                                            "-s", on,
+                                            "-plugs", off,
+                                            ($blendNodesForAttr[$i]+".weightB" ) );
+        string $conn = $conns[0];
+
+        if( $conn=="" || nodeType($conn)!="animLayer" )
+        {
+            error(  $sn+" the blend node "+$blendNodesForAttr[$i]+
+                    " is not connected to a animLayer node" );}
+    }
+
+	string $outputName, $inputName;
+
+	if( nodeType( $blendNodesForAttr[0] )==
+        "animBlendNodeAdditiveRotation" )
+	{
+		if( $attrName=="rotateX" )
+		{
+			$outputName = ".outputX";
+			$inputName = ".inputBX";
+		}
+		else if( $attrName=="rotateY" )
+		{
+			$outputName = ".outputY";
+			$inputName = ".inputBY";
+		}
+		else if( $attrName=="rotateZ" )
+		{
+			$outputName = ".outputZ";
+			$inputName = ".inputBZ";
+		}
+		else
+		{
+			$outputName = ".output";
+			$inputName = ".inputB";
+		}
+	}
+	else
+	{
+		$outputName = ".output";
+		$inputName = ".inputB";
+	}
+
+	$blendInputAttr[0] = $inputName;
+
+//string $f = $blendNodesForAttr[0] + $outputName;
+//print( "attr = " + $f + "\n" );
+
+	float $outputValue                  = getAttr( $blendNodesForAttr[0]+$outputName );
+	float $currentLayerInputBValue      = getAttr( $blendNodeName+$inputName );
+	float $currentLayerWeightB          = getAttr( $blendNodeName+".weightB" );
+	float $trueCurrentLayerValue        = $currentLayerInputBValue*$currentLayerWeightB;
+	float $diff                         = $outputValue - $trueCurrentLayerValue;
+	float $newGrossValue                = getAttr( $objectName );
+	float $currentLayerSpecificNewValue = $newGrossValue - $diff;
+
+//print( "value = " + $currentLayerSpecificNewValue + "\n" );
+
+    return $currentLayerSpecificNewValue;
+}
+
+//_______________________________________________________________________________
+//
+//
+global proc sciAddTrueAttributeValueToAnimCurve(    string $objectName,
+												    string $newObjectName[],
+												    float $keyValue[],
+												    string $blendInputAttr[] )
+{
+    string $sn = " // sciloop message : mel :"+
+                    " 'sciAddTrueAttributeValueToAnimCurve' :";
+
+    //string $underscoreName = getObjectNameWithUnderscore( $objectName );
+    string $activeAnimLayerName = sciGetActiveAnimLayer();
+
+    // We do not have animLayer nodes.
+    //
+    if( $activeAnimLayerName=="" )
+    {return;}
+
+    // Check whether any animLayer has the attribute included.
+    //
+    string $animLayersWithAttr[] = sciGetAnimLayersWithAttr( $objectName );
+    int $sizeLayer = size( $animLayersWithAttr );
+    if( !$sizeLayer )
+    {return;}
+
+    // Check whether the currently active
+    // animLayer has the attribute included.
+    //
+    int $attrIsIncludedInLayer =
+            sciGetAttrIncludedInAnimLayerInfo( $objectName, $activeAnimLayerName );
+
+    if( !$attrIsIncludedInLayer )
+    {
+        print(  $sn+" error : the attribute "+$objectName+
+                " is not included in the current active animLayer : '"+
+                $activeAnimLayerName+"'!\n" );
+
+        print( " included attributes are :\n");
+        print( animLayer( "-q", "-attribute", $activeAnimLayerName ) );
+
+        return;
+    }
+
+    // Get all blend nodes which contribute
+    // to the value of the attribute.
+    //
+    string $animCurve[] = {};
+    string $blendNodesForAttr[] = sciGetBlendNodesForAttribute( $objectName );
+    if( size($blendNodesForAttr)==0 )
+    {
+        error( $sn+" cannot find blendNode which inputs"+
+              " attribute value for "+$objectName );
+    }
+
+    // Get the blend node which has to be keyed.
+    //
+    string $blendNodeName = sciGetAttrBlendNode(	$objectName,
+												    $activeAnimLayerName,
+												    $blendNodesForAttr );
+    if( $blendNodeName=="" )
+    {
+        error(  $sn+" the attribute "+$objectName+
+                " does not have a associated blendNode!\n" );
+    }
+
+
+    $keyValue[0] = sciGetTrueAttributeValueToKey(	$objectName,
+												    $blendNodeName,
+												    $blendNodesForAttr,
+												    $blendInputAttr );
+    $newObjectName[0] = $blendNodeName;
+
+    return;
+}
+
+//_______________________________________________________________________________
+//
+//
+global proc string sciCreateCommandForSetDrivenKeyWindow(   string $cmd,
+                                                            string $drivenNode,
+                                                            string $drivenChannel )
+{
+    string $sn = " // sciloop message : mel : "+
+                   " 'sciCreateCommandForSetDrivenKeyWindow'";
+
+    if( $drivenChannel=="" )
+    {
+        print( $sn+" error : $drivenChannel is empty!\n" );
+        return "";
+    }
+
+    string $newObjectName[1] = {""};
+    float $keyValue[1] = {0};
+    string $blendInputAttr[1] = {""};
+
+    string $tmp[] = ls( "-l", $drivenNode );
+
+    if( size($tmp)!=1 )
+    {
+        print( $sn+" warning : more than node found"+
+                " for $driven node. Terminate script!\n" );
+        return "";
+    }
+
+    $drivenNode = $tmp[0];
+
+    string $objectName = $drivenNode+"."+$drivenChannel;
+
+    sciAddTrueAttributeValueToAnimCurve(    $objectName,
+                                            $newObjectName,
+                                            $keyValue,
+                                            $blendInputAttr );
+
+    string $buffer0[] = {};
+    int $numTokens0 = tokenize( $cmd, " ", $buffer0 );
+    string $driver = $buffer0[$numTokens0-1];
+    $driverValue = getAttr( $driver );
+
+//print( $sn+" driver value = "+$driverValue+"\n" );
+
+
+    if( $newObjectName[0]!="" )
+    {$cmd = (   $cmd+" -driverValue "+$driverValue+" -value "+$keyValue[0]+" "+
+                $newObjectName[0]+$blendInputAttr[0] );}
+    else
+    {$cmd = $cmd+"-driverValue "+$driverValue+" "+$drivenNode+"."+$drivenChannel;}
+
+    return $cmd;
+}
+
+//_______________________________________________________________________________
+//
+//
+global proc sciCreateButtonForSetDrivenKeyWindow()
+{
+    formLayout( "sciSetDrivenKeyRadioButtonForm" );
+     radioButtonGrp( "-numberOfRadioButtons", 2,
+                     "-label", "key mode",
+                     "-labelArray2", "relative", "absolute",
+                     "-select", 1,
+                     "-vertical",
+                     "sciKeyModeRadioButton" );
+    setParent ..;
+
+       formLayout(  "-edit",
+                    "-attachForm", "sciKeyModeRadioButton", "left", 1,
+                    "-attachForm", "sciKeyModeRadioButton", "bottom", 1,
+                    "sciSetDrivenKeyRadioButtonForm" );
+}
+
+//_______________________________________________________________________________
+//
+//
+
