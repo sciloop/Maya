@@ -1,0 +1,852 @@
+//
+// creator: sciloop
+//
+// last update: 2014_08_13
+//
+// Set the position of all selected nodes in a container.
+//
+// Select the first node and then all other nodes which should
+// be repositioned relative to the first node.
+//
+// Sort the nodes according to their current distance
+// to the first selected node.
+//
+// parameter 1 : align vertically, horizontally or grid based
+// parameter 2 : 'relative' -> relevant only for : 'verticaly', 'horizontally' :
+// the direction of the alignment -> the nodes keep their overall position
+// relative to the start node, but aligned. If 'relative' is not choosen,
+// the nodes will shifted to the same side of the start node.
+// parameter 3 : array for the nodeTypes which should be included; if left empty,
+// all selected nodes are included
+// parameter 4 : put shape nodes next to their transforms ( must both be selected )
+// in case that the nodeType parameter is not empty and its a shape node,
+// 'shapeWithTransform' means that also the shapes` tramsforms will be considered.
+//
+// possible combinations :
+//
+// sciAlignNodesInContainer( "vertically",   "relative",  {}, "shapeWithTransform" );
+// sciAlignNodesInContainer( "vertically",   "up",        {}, "shapeWithTransform" );
+// sciAlignNodesInContainer( "vertically",   "down",      {}, "shapeWithTransform" );
+//
+// sciAlignNodesInContainer( "horizontally", "relative",  {}, "shapeWithTransform" );
+// sciAlignNodesInContainer( "horizontally", "right",     {}, "shapeWithTransform" );
+// sciAlignNodesInContainer( "horizontally", "left",      {}, "shapeWithTransform" );
+//
+// sciAlignNodesInContainer( "grid",         "right_down",{}, "shapeWithTransform" );
+// sciAlignNodesInContainer( "grid",         "right_up",  {}, "shapeWithTransform" );
+// sciAlignNodesInContainer( "grid",         "left_up",   {}, "shapeWithTransform" );
+// sciAlignNodesInContainer( "grid",         "left_down", {}, "shapeWithTransform" );
+//
+//
+// sciAlignNodesInContainer( "vertically",   "relative",  {}, "NOTshapeWithTransform" );
+// sciAlignNodesInContainer( "vertically",   "up",        {}, "NOTshapeWithTransform" );
+// sciAlignNodesInContainer( "vertically",   "down",      {}, "NOTshapeWithTransform" );
+//
+// sciAlignNodesInContainer( "horizontally", "relative",  {}, "NOTshapeWithTransform" );
+// sciAlignNodesInContainer( "horizontally", "right",     {}, "NOTshapeWithTransform" );
+// sciAlignNodesInContainer( "horizontally", "left",      {}, "NOTshapeWithTransform" );
+//
+// sciAlignNodesInContainer( "grid",         "right_down",{}, "NOTshapeWithTransform" );
+// sciAlignNodesInContainer( "grid",         "right_up",  {}, "NOTshapeWithTransform" );
+// sciAlignNodesInContainer( "grid",         "left_up",   {}, "NOTshapeWithTransform" );
+// sciAlignNodesInContainer( "grid",         "left_down", {}, "NOTshapeWithTransform" );
+//
+// example : sciAlignNodesInContainer(  "grid",
+//                                      "right_down",
+//                                      {"locator"},
+//                                      "shapeWithTransform" );
+//
+//_____________________________________________________________________________
+//
+//
+global proc sciSetDistanceIndicesForNodes(  int $distanceIndexHorizontal[],
+                                            int $distanceIndexHorizontalRight[],
+                                            int $distanceIndexHorizontalLeft[],
+                                            int $distanceIndexVertical[],
+                                            int $distanceIndexVerticalUp[],
+                                            int $distanceIndexVerticalDown[],
+                                            int $xPos1[],
+                                            int $yPos1[],
+                                            string $hyperLayouts1[],
+                                            string $align )
+{
+    // Initialize the arrays.
+    //
+    for( $i=0; $i<size($hyperLayouts1); $i++ )
+    {
+        $distanceIndexHorizontal[$i]      = $i;
+        $distanceIndexVertical[$i]        = $i;
+
+        $distanceIndexHorizontalRight[$i] = $i;
+        $distanceIndexHorizontalLeft[$i]  = $i;
+
+        $distanceIndexVerticalUp[$i]      = $i;
+        $distanceIndexVerticalDown[$i]    = $i;
+    }
+
+    // Iterate over all selected nodes (but the start node)
+    // in the same container
+    //
+    for( $i=0; $i<size($hyperLayouts1); $i++ )
+    {
+        int $currDistanceIndexHorizontal[]      = {0};
+        int $currDistanceIndexVertical[]        = {0};
+
+        int $currDistanceIndexHorizontalRight[] = {0};
+        int $currDistanceIndexVerticalUp[]      = {0};
+
+        int $currDistanceIndexHorizontalLeft[]  = {0};
+        int $currDistanceIndexVerticalDown[]    = {0};
+
+        int $horizontalToRight           = false;
+        int $verticalToUp                = false;
+
+        // Is the node to the right of the start node?
+        // Is the node to the top of the start node?
+        //
+        if( $xPos1[$i]>=$xPos1[0] )
+        {$horizontalToRight = true;}
+
+        if( $yPos1[$i]>=$yPos1[0] )
+        {$verticalToUp = true;}
+
+        // Compare the position of every node with
+        // every other node.
+        // Find the final array index based on the
+        // nodes position.
+        //
+        for( $k=1; $k<size($hyperLayouts1); $k++ )
+        {
+            // We do not want a comparison with
+            // itself.
+            //
+            if( $i==$k )
+            {continue;}
+
+            // Align HORIZONTAL operations.
+            //
+            if( $align=="horizontally" || $align=="grid" )
+            {
+                sciSetHyperLayoutPositionIndices(   $xPos1,
+                                                    $currDistanceIndexHorizontal,
+                                                    $currDistanceIndexHorizontalRight,
+                                                    $currDistanceIndexHorizontalLeft,
+                                                    $i,
+                                                    $k );
+            }
+
+            // Align VERTICAL operations.
+            //
+            if( $align=="vertically" || $align=="grid" )
+            {
+                sciSetHyperLayoutPositionIndices(   $yPos1,
+                                                    $currDistanceIndexVertical,
+                                                    $currDistanceIndexVerticalUp,
+                                                    $currDistanceIndexVerticalDown,
+                                                    $i,
+                                                    $k );
+           }
+        }
+
+        // We must shift the resulting index for all cases but the
+        // starting node.
+        //
+        if( $i>0 && $align=="grid" )
+        {
+            $currDistanceIndexHorizontal[0]      = $currDistanceIndexHorizontal[0] + 1;
+            $currDistanceIndexHorizontalRight[0] = $currDistanceIndexHorizontalRight[0] + 1;
+            $currDistanceIndexHorizontalLeft[0]  = $currDistanceIndexHorizontalLeft[0] + 1;
+
+            $currDistanceIndexVertical[0]       = $currDistanceIndexVertical[0] + 1;
+            $currDistanceIndexVerticalUp[0]     = $currDistanceIndexVerticalUp[0] + 1;
+            $currDistanceIndexVerticalDown[0]   = $currDistanceIndexVerticalDown[0] + 1;
+        }
+        else if( $i>0 && $align=="horizontally" )
+        {
+            $currDistanceIndexHorizontal[0]      = $currDistanceIndexHorizontal[0] + 1;
+            $currDistanceIndexHorizontalRight[0] = $currDistanceIndexHorizontalRight[0] + 1;
+            $currDistanceIndexHorizontalLeft[0]  = $currDistanceIndexHorizontalLeft[0] + 1;
+        }
+        else if( $i>0 && $align=="vertically" )
+        {
+            $currDistanceIndexVertical[0]       = $currDistanceIndexVertical[0] + 1;
+            $currDistanceIndexVerticalUp[0]     = $currDistanceIndexVerticalUp[0] + 1;
+            $currDistanceIndexVerticalDown[0]   = $currDistanceIndexVerticalDown[0] + 1;
+        }
+
+        // Fill the arrays with the new position of the node.
+        //
+        $distanceIndexHorizontal[$i] = $currDistanceIndexHorizontal[0];
+        $distanceIndexVertical[$i]   = $currDistanceIndexVertical[0];
+
+
+        // Relative mode only : we have to fill empty places with '-1'.
+        //
+        if( $horizontalToRight==true )
+        {
+            $distanceIndexHorizontalRight[$i] = $currDistanceIndexHorizontalRight[0];
+            $distanceIndexHorizontalLeft[$i] = -1;
+        }
+        else
+        {
+            $distanceIndexHorizontalRight[$i] = -1;
+            $distanceIndexHorizontalLeft[$i] = $currDistanceIndexHorizontalLeft[0];
+        }
+
+        if( $verticalToUp==true )
+        {
+            $distanceIndexVerticalUp[$i] = $currDistanceIndexVerticalUp[0];
+            $distanceIndexVerticalDown[$i] = -1;
+        }
+        else
+        {
+            $distanceIndexVerticalUp[$i] = -1;
+            $distanceIndexVerticalDown[$i] = $currDistanceIndexVerticalDown[0];
+        }
+    }
+}
+
+//_____________________________________________________________________________
+//
+// Find and set the index in the array
+// based on the position of the node.
+//
+global proc sciSetHyperLayoutPositionIndices(   int $pos[],
+                                                int $arrayIndex[],
+                                                int $arrayIndexGreater[],
+                                                int $arrayIndexSmaller[],
+                                                int $i,
+                                                int $k )
+{
+
+    // all nodes in the same direction to the start node
+    // VERTICAL, UP/DOWN or HORIZONTAL, LEFT/RIGHT
+    //
+    if( abs($pos[$i]-$pos[0])>abs($pos[$k]-$pos[0]) )
+    {$arrayIndex[0] = $arrayIndex[0]+1;}
+    else if( abs($pos[$i]-$pos[0])==abs($pos[$k]-$pos[0]) )
+    {
+        if( $i>$k )
+        {$arrayIndex[0] = $arrayIndex[0]+1;}
+    }
+
+    // nodes relative to the start node :
+    // Node is to the top or right of the start node.
+    //
+    if( $pos[$i]>=$pos[0] && $pos[$k]>=$pos[0] )
+    {
+        if( $pos[$i]>$pos[$k] )
+        {$arrayIndexGreater[0] = $arrayIndexGreater[0]+1;}
+        else if( $pos[$i]==$pos[$k] )
+        {
+            if( $i>$k )
+            {$arrayIndexGreater[0] = $arrayIndexGreater[0]+1;}
+        }
+    }
+
+    // nodes relative to the start node :
+    // Node is to the bottom or left of the start node.
+    //
+    if( $pos[$i]<$pos[0] && $pos[$k]<$pos[0] )
+    {
+        if( $pos[$i]<$pos[$k] )
+        {$arrayIndexSmaller[0] = $arrayIndexSmaller[0]+1;}
+        else if( $pos[$i]==$pos[$k] )
+        {
+            if( $i>$k )
+            {$arrayIndexSmaller[0] = $arrayIndexSmaller[0]+1;}
+        }
+    }
+}
+
+//_____________________________________________________________________________
+//
+// Set the new position of the nodes.
+//
+global proc int sciSetPositionInContainer(  string $direction,
+                                            string $hyperLayouts[],
+                                            int $indices[],
+                                            string $nodes[],
+                                            int $distanceIndexHorizontal[],
+                                            int $distanceIndexHorizontalRight[],
+                                            int $distanceIndexHorizontalLeft[],
+                                            int $distanceIndexVertical[],
+                                            int $distanceIndexVerticalUp[],
+                                            int $distanceIndexVerticalDown[],
+                                            int $xPos[],
+                                            int $yPos[],
+                                            int $horizontalOffset,
+                                            int $verticalOffset,
+                                            int $newStartAfter )
+{
+    string $sn = " // sciloop message : mel : 'sciSetPositionInContainer' :";
+
+    // Align all nodes to the same direction horizontally.
+    //
+    if( $direction!="relative" )
+    {
+        int $signHorizontal = 1;
+        int $signVertical   = 1;
+
+        if( $direction=="up" )
+        {$signVertical = 1;}
+        else if( $direction=="down" )
+        {$signVertical = -1;}
+
+        else if( $direction=="right" )
+        {$signHorizontal = 1;}
+        else if( $direction=="left" )
+        {$signHorizontal = -1;}
+
+        else if( $direction=="right_up" )
+        {
+            $signHorizontal = 1;
+            $signVertical   = 1;
+        }
+        else if( $direction=="right_down" )
+        {
+            $signHorizontal = 1;
+            $signVertical   = -1;
+        }
+        else if( $direction=="left_up" )
+        {
+            $signHorizontal = 1;
+            $signVertical   = -1;
+        }
+        else if( $direction=="left_down" )
+        {
+            $signHorizontal = -1;
+            $signVertical   = -1;
+        }
+
+        print( $sn+" position of start node : '"+$nodes[0]+"' : "+
+                $xPos[0]+" "+$yPos[0]+"\n\n" );
+
+        int $substractVertical   = 0;
+        int $substractHorizontal = 0;
+
+        for( $i=0; $i<size($hyperLayouts); $i++ )
+        {
+
+            int $newXPos = 0;
+            int $newYPos = 0;
+            string $hyperLayoutPosX = "";
+            string $hyperLayoutPosY = "";
+
+            int $hlIndexX = 0;
+            int $hlIndexY = 0;
+
+            // horizontal
+            //
+
+            // For 'grid' type.
+            //
+            if( $newStartAfter!=-1 )
+            {
+                int $timesH = $distanceIndexHorizontal[$i]/$newStartAfter;
+                $substractHorizontal = $timesH*$newStartAfter;
+
+                // If we have the 'grid' type, do not take the immediate hyperLayout
+                // index of the node, but take this one here.
+                // ( the horizontal and vertical distance indices are not identical
+                // for each node, so do it this way.
+                //
+                $hlIndexX = $indices[$distanceIndexHorizontal[$i]];
+            }
+
+            // If we have non-grid type,
+            // take the direct hyperLayout index of the node
+            //
+            else
+            {$hlIndexX = $indices[$i];}
+
+            // Create the new x position in the container.
+            //
+            $newXPos =  $xPos[0] +
+                        ($distanceIndexHorizontal[$i]-$substractHorizontal)*
+                        $horizontalOffset*
+                        $signHorizontal;
+
+            //
+            $hyperLayoutPosX =  $hyperLayouts[0]+
+                                ".hyperPosition["+
+                                $hlIndexX+
+                                "].positionX";
+
+// print( $sn+" distanceIndexHorizontal = "+$distanceIndexHorizontal[$i]+"\n" );
+// print( $sn+" xPos[0]                 = "+$xPos[0]+"\n" );
+// print( $sn+" substractHorizontal     = "+$substractHorizontal+"\n" );
+// print( $sn+" horizontal index        = "+($distanceIndexHorizontal[$i]-$substractHorizontal)+"\n" );
+// print( $sn+" newXPos                 = "+$newXPos+"\n" );
+// print( $sn+" hyperLayoutPosX         = "+$hyperLayoutPosX+"\n" );
+// print( "\n" );
+
+            setAttr( $hyperLayoutPosX,$newXPos );
+
+
+
+            // vertical
+            //
+
+            // For 'grid' type.
+            //
+            if( $newStartAfter!=-1 )
+            {
+                int $timesV = $distanceIndexVertical[$i]/$newStartAfter;
+                $substractVertical = $distanceIndexVertical[$i] - $timesV;
+
+                 $hlIndexY = $indices[$distanceIndexVertical[$i]];
+            }
+            else
+            {$hlIndexY = $indices[$i];}
+
+            // Create the new y position in the container.
+            //
+            $newYPos =  $yPos[0] +
+                        ($distanceIndexVertical[$i]-$substractVertical)*
+                        $verticalOffset*
+                        $signVertical;
+
+            $hyperLayoutPosY =  $hyperLayouts[0]+
+                                ".hyperPosition["+
+                                $hlIndexY+
+                                "].positionY";
+
+// print( $sn+" distanceIndexVertical   = "+$distanceIndexVertical[$i]+"\n" );
+// print( $sn+" yPos[0]                 = "+$yPos[0]+"\n" );
+// print( $sn+" substractVertical       = "+$substractVertical+"\n" );
+// print( $sn+" vertical   index        = "+($distanceIndexVertical[$i]-$substractVertical)+"\n" );
+// print( $sn+" newYPos                 = "+$newYPos+"\n" );
+// print( $sn+" hyperLayoutPosY         = "+$hyperLayoutPosY+"\n" );
+// print( "\n" );
+
+            setAttr( $hyperLayoutPosY, $newYPos );
+
+
+            // print(  $sn+" reposition horizontally at index : "+
+            //         $indices[$distanceIndexHorizontal[$i]]+
+            //         " vertically at index : "+
+            //         $indices[$distanceIndexVertical[$i]]+
+            //         " :set position X and Y of '"+$nodes[$i]+
+            //         "' to "+$newXPos+" and "+$newYPos+"\n" );
+
+
+
+        }
+    }
+
+    // Leave the nodes at their relative position to the surrounding nodes,
+    // but align them vertically or horizontally; no 'grid' type here.
+    //
+    else if( $direction=="relative" && $newStartAfter==-1 )
+    {
+        for( $i=0; $i<size($hyperLayouts); $i++ )
+        {
+            if( $distanceIndexHorizontalRight[$i]!=-1 )
+            {
+                setAttr(    $hyperLayouts[0]+".hyperPosition["+$indices[$i]+"].positionX",
+                            $xPos[0]+$distanceIndexHorizontalRight[$i]*$horizontalOffset );
+
+                print(  $sn+" reposition horizontallyRight, relative at index : "+
+                        $indices[$distanceIndexHorizontalRight[$i]]+
+                        " :set position X and Y of '"+$nodes[$i]+
+                        "' to "+($xPos[0]+$distanceIndexHorizontalRight[$i]*$horizontalOffset)+
+                        " and "+$yPos[0]+".\n" );
+            }
+            else if( $distanceIndexHorizontalLeft[$i]!=-1 )
+            {
+                setAttr(    $hyperLayouts[0]+".hyperPosition["+$indices[$i]+"].positionX",
+                            $xPos[0]+$distanceIndexHorizontalLeft[$i]*(-$horizontalOffset) );
+
+                print(  $sn+" reposition horizontallyLeft, relative at index : "+
+                        $indices[$distanceIndexHorizontalLeft[$i]]+
+                        " :set position X and Y of '"+$nodes[$i]+
+                        "' to "+($xPos[0]+$distanceIndexHorizontalLeft[$i]*$horizontalOffset)+
+                        " and "+$yPos[0]+".\n" );
+            }
+
+
+            if( $distanceIndexVerticalUp[$i]!=-1 )
+            {
+                setAttr(    $hyperLayouts[0]+".hyperPosition["+$indices[$i]+"].positionY",
+                            $yPos[0]+$distanceIndexVerticalUp[$i]*$verticalOffset );
+
+                print(  $sn+" reposition verticallyUp, relative at index : "+
+                        $indices[$distanceIndexVerticalUp[$i]]+
+                        " :set position X and Y of '"+$nodes[$i]+
+                        "' to "+$xPos[0]+" and "+
+                        ($yPos[0]+$distanceIndexVerticalUp[$i]*$verticalOffset)+".\n" );
+            }
+            else if( $distanceIndexVerticalDown[$i]!=-1 )
+            {
+                setAttr(    $hyperLayouts[0]+".hyperPosition["+$indices[$i]+"].positionY",
+                            $yPos[0]+$distanceIndexVerticalDown[$i]*(-$verticalOffset) );
+
+                print( $sn+" reposition verticallyDown, relative at index : "+
+                        $indices[$distanceIndexVerticalDown[$i]]+
+                        " :set position X and Y of '"+$nodes[$i]+
+                        "' to "+$xPos[0]+" and "+
+                        ($yPos[0]+$distanceIndexVerticalDown[$i]*(-$verticalOffset))+".\n" );
+            }
+
+//print( "\n" );
+
+        }
+    }
+    else
+    {
+        print( $sn+" direction has no meaning : "+$direction+"\n" );
+        return false;
+    }
+
+    return true;
+}
+
+//_____________________________________________________________________________
+//
+//
+global proc int sciGetHyperLayoutData(  string $sel[],
+                                        string $hyperLayouts0[],
+                                        string $nodes0[],
+                                        int $indices0[],
+                                        string $objectType0[] )
+{
+    string $sn = " // sciloop message : mel : 'sciGetHyperLayoutData' :";
+
+    for( $i=0; $i<size($sel); $i++ )
+    {
+        string $cons[] = listConnections(   "-type", "hyperLayout",
+                                            "-d", true,
+                                            "-s", false,
+                                            "-p", true,
+                                            $sel[$i]+".message" ) ;
+
+        int $conSize = size( $cons );
+
+        if( $conSize!=1 )
+        {
+            if( size($hyperLayouts0)!=0 )
+            {
+                print( $sn+" "+$sel[$i]+" has "+$conSize+" hyperLayout connections.\n //"+
+                    " As we have already a valid hyperLayout connection,\n //"+
+                    " the other hyperLayout connections will be deleted.\n" );
+
+                int $oneConnectionAlready = false;
+
+                for( $k=0; $k<$conSize; $k++ )
+                {
+                    // Current node is additionally connected to another hyperLayout node.
+                    //
+                    if( $hyperLayouts0[0]!=plugNode($cons[$k]) )
+                    {sciDisconnectAttr( plugAttr($cons[$k]), {plugNode($cons[$k])} );}
+
+                    // Current node has more than one connections to
+                    // the same hyperLayout node.
+                    //
+                    if( $hyperLayouts0[0]==plugNode($cons[$k]) )
+                    {
+                        if( $oneConnectionAlready==true )
+                        {sciDisconnectAttr( plugAttr($cons[$k]), {plugNode($cons[$k])} );}
+                        else
+                        {$oneConnectionAlready = true;}
+                    }
+                }
+            }
+            else
+            {
+                print( $sn+" "+$sel[$i]+" has "+$conSize+" hyperLayouts attached."+
+                        " Only 1 allowed. Terminate script!\n" );
+                return false;
+            }
+        }
+
+        $hyperLayouts0[size($hyperLayouts0)] = plugNode( $cons[0] );
+        $nodes0[size($nodes0)] = $sel[$i];
+
+        string $attrName  = plugAttr( $cons[0]);
+        string $buffer0[] = {};
+        int $numTokens0   = tokenize( $attrName, "[", $buffer0 );
+        string $buffer1[] = {};
+        int $numTokens1   = tokenize( $buffer0[$numTokens0-1], "]", $buffer1 );
+        int $currIndex    = $buffer1[0];
+
+        $indices0[size($indices0)] = $currIndex;
+
+        if( objectType( "-isAType", "dagNode", $sel[$i] ) )
+        {
+            if( objectType( "-isAType", "shape", $sel[$i] ) )
+            {$objectType0[size($objectType0)] = "shape";}
+            else if( objectType( "-isAType", "transform", $sel[$i] ) )
+            {$objectType0[size($objectType0)] = "transform";}
+        }
+        else
+        {$objectType0[size($objectType0)] = "DGNode";}
+    }
+
+    if( size($hyperLayouts0)<2 )
+    {
+        print( $sn+" only one hyperLayout node connection found."+
+                    " Select more than one node in a container, please!\n" );
+        return false;
+    }
+
+    return true;
+}
+
+
+//_____________________________________________________________________________
+//
+// The start procedure.
+//
+global proc sciAlignNodesInContainer(   string $align,
+                                        string $direction,
+                                        string $nodeTypes[],
+                                        string $shapeTransform )
+{
+    string $sn = " // sciloop message : mel : 'sciAlignNodesInContainer' :";
+
+    if( exists("sciDisconnectAttr") )
+    {source "sciDisconnectAttr";}
+    else
+    {
+        print( $sn+ "could not find proc : 'sciDisconnectAttr'."+
+                " Terminate script.\n" );
+        return;
+    }
+
+    string $sel[] = {};
+
+    if( size($nodeTypes)==0 )
+    {$sel = ls( "-l", "-selection" );}
+    else
+    {
+        $sel = sciGetSelectedNodeTypes( $nodeTypes, {} );
+
+        if( $shapeTransform=="shapeWithTransform" &&
+            objectType(  "-isAType",
+            "shape",
+            $sel[0] ) )
+        {
+            string $ts[] = sciGetSelectedNodeTypes( {"transform"}, {} );
+
+            // For every selected shape.
+            //
+            int $sizeSel = size( $sel );
+            int $sizeT   = size( $ts );
+
+            for( $i=0; $i<$sizeSel; $i++ )
+            {
+                string $tmp[] = listRelatives( "-f", "-parent", $sel[$i] );
+
+                int $parentFound = false;
+
+                // For every parent of the shape.
+                //
+                for( $k=0; $k<size($tmp); $k++ )
+                {
+                    // Is the selected transform the parent of
+                    // the selected shape?
+                    //
+                    for( $m=0; $m<$sizeT; $m++ )
+                    {
+                        if( $tmp[$k]==$ts[$m] )
+                        {$sel[size($sel)] = $tmp[$k];}
+                    }
+                }
+            }
+        }
+    }
+
+    int $size = size( $sel );
+
+    if( $size==0 )
+    {
+        print( $sn+" Select nodes in a container, please.\n" );
+        return;
+    }
+
+
+    // The distance every node should be offset relative to
+    // the neighbouring node when the new position is set.
+    //
+    int $horizontalOffset = 200;
+    int $verticalOffset   = 250;
+
+    // The hyperLayout node names for the nodes.
+    //
+    string $hyperLayouts0[] = {};
+
+    // The names of the nodes to set the position for.
+    //
+    string $nodes0[]        = {};
+
+    // The hyperLayout indices of the nodes.
+    //
+    int $indices0[]         = {};
+
+    // The nodeTypes of the nodes ( DGNode, transform, shape )
+    //
+    string $objectType0[]   = {};
+
+    // Fill the arrays for every node.
+    //
+    int $sciResult = sciGetHyperLayoutData( $sel,
+                                            $hyperLayouts0,
+                                            $nodes0,
+                                            $indices0,
+                                            $objectType0 );
+
+   if( $sciResult==false )
+   {return;}
+
+    // We only want nodes which in the same container.
+    //
+    string $hyperLayouts1[] = {$hyperLayouts0[0]};
+    string $nodes1[]        = {$nodes0[0]};
+    int $indices1[]         = {$indices0[0]};
+    string $objectType1[]   = {$objectType0[0]};
+
+    for( $i=1; $i<size($hyperLayouts0); $i++ )
+    {
+        if( $hyperLayouts0[$i]==$hyperLayouts0[0] )
+        {
+            $hyperLayouts1[size($hyperLayouts1)]    = $hyperLayouts0[$i];
+            $nodes1[size($nodes1)]                  = $nodes0[$i];
+            $indices1[size($indices1)]              = $indices0[$i];
+            $objectType1[size($objectType1)]        = $objectType0[$i];
+        }
+    }
+
+
+    // Get the current container coordinates for the nodes.
+    //
+    int $xPos1[] = {};
+    int $yPos1[] = {};
+
+    for( $i=0; $i<size($hyperLayouts1); $i++ )
+    {
+        // In case we want the shape and its transform together in the container,
+        // adjust the starting position of the shape so its directly next its transform.
+        //
+        if( $shapeTransform=="shapeWithTransform" && $objectType1[$i]=="shape" )
+        {
+            // Check all possible parent transforms.
+            //
+            for( $k=0; $k<size($objectType1); $k++ )
+            {
+                if( $objectType1[$k]=="transform" )
+                {
+                    string $tmps[] = listRelatives( "-f", "-shapes", $nodes1[$k] );
+
+                    for( $m=0; $m<size($tmps); $m++ )
+                    {
+                        // Is the current shape a child of the transform?
+                        //
+                        if( $tmps[$m]==$nodes1[$i] )
+                        {
+                            // Reposition the shape in the container so that is directly
+                            // next to the transform.
+                            //
+                            int $xposT;
+                            int $yPosT;
+
+                            $xposT = getAttr( $hyperLayouts1[0]+".hyperPosition["+$indices1[$k]+"].positionX" );
+                            $yPosT = getAttr( $hyperLayouts1[0]+".hyperPosition["+$indices1[$k]+"].positionY" );
+
+                            setAttr( $hyperLayouts1[0]+".hyperPosition["+$indices1[$i]+"].positionX", $xposT+1 );
+                            setAttr( $hyperLayouts1[0]+".hyperPosition["+$indices1[$i]+"].positionY", $yPosT-1 );
+                        }
+                    }
+
+                }
+            }
+        }
+
+        // Fill the position arrays.
+        //
+        $xPos1[size($xPos1)] = getAttr( $hyperLayouts1[0]+".hyperPosition["+$indices1[$i]+"].positionX" );
+        $yPos1[size($yPos1)] = getAttr( $hyperLayouts1[0]+".hyperPosition["+$indices1[$i]+"].positionY" );
+        setAttr( $hyperLayouts1[0]+".hyperPosition["+$indices1[$i]+"].isFreeform", true );
+    }
+
+
+    // Create arrays which carry the indices according to
+    // their distance to the first selected node.
+    // If a node is further away from the first selected node,
+    // it will appear later in the array.
+    //
+    // We have arrays for every modus (horizontal, right;
+    // horizontal, relative; etc.)
+    //
+    // HORIZONTAL, RIGHT/LEFT
+    //
+    int $distanceIndexHorizontal[]        = {};
+
+    // HORIZONTAL, RELATIVE
+    //
+    int $distanceIndexHorizontalRight[]   = {};
+    int $distanceIndexHorizontalLeft[]    = {};
+
+
+    // VERTICAL, UP/DOWN
+    //
+    int $distanceIndexVertical[]          = {};
+
+    // VERTICAL, RELATIVE
+    //
+    int $distanceIndexVerticalUp[]        = {};
+    int $distanceIndexVerticalDown[]      = {};
+
+
+    sciSetDistanceIndicesForNodes(  $distanceIndexHorizontal,
+                                    $distanceIndexHorizontalRight,
+                                    $distanceIndexHorizontalLeft,
+                                    $distanceIndexVertical,
+                                    $distanceIndexVerticalUp,
+                                    $distanceIndexVerticalDown,
+                                    $xPos1,
+                                    $yPos1,
+                                    $hyperLayouts1,
+                                    $align );
+
+
+    // For the 'grid' type, we need the row and column count.
+    //
+    int $sr = -1;
+    if( $align=="grid" )
+    {$sr = (int)sqrt( size($hyperLayouts1) ) + 1;}
+
+
+    // Position the nodes.
+    //
+    if( $align=="horizontally" ||
+        $align=="vertically"   ||
+        $align=="grid" )
+    {
+        int $sciResult = sciSetPositionInContainer( $direction,
+                                                    $hyperLayouts1,
+                                                    $indices1,
+                                                    $nodes1,
+                                                    $distanceIndexHorizontal,
+                                                    $distanceIndexHorizontalRight,
+                                                    $distanceIndexHorizontalLeft,
+                                                    $distanceIndexVertical,
+                                                    $distanceIndexVerticalUp,
+                                                    $distanceIndexVerticalDown,
+                                                    $xPos1,
+                                                    $yPos1,
+                                                    $horizontalOffset,
+                                                    $verticalOffset,
+                                                    $sr );
+       if( $sciResult==false )
+       {return;}
+    }
+    else
+    {print( $sn+" '"+$align+"'' is not implemented yet.\n" );}
+
+    print( $sn+" done!\n" );
+}
+
+//_____________________________________________________________________________
+//
+//
