@@ -1,0 +1,45 @@
+//
+// We want to turn on the 'cmEnabled' attribute of the
+// 'defaultColorMgtGlobals' node.
+//
+//__________________________________________________________
+//
+//
+global proc sciEnableColorManagementSourced()
+{
+	print(	" // sciloop message: mel:"+
+			" 'sciEnableColorManagement.mel' sourced.\n" );
+}
+sciEnableColorManagementSourced();
+
+//__________________________________________________________
+//
+//
+global proc sciEnableColorManagement()
+{
+	string $sn = " // sciloop message: mel :"+
+				" sciEnableColorManagement :";
+
+	// Iff the node 'defaultColorMgtGlobals' exists,
+	// we want to turn on color management.
+	//
+	if( objExists( "defaultColorMgtGlobals" ) )
+	{
+		colorManagementPrefs(	"-edit",
+								"-popupOnError", true,
+								"-cmEnabled", true );
+
+		// This is for saving rendered images in the
+		// renderView correctly.
+		//
+		optionVar( "-intValue", "renderViewSaveMode", 1 );
+
+		print( $sn+" enabled 'ColorManagement' and set"+
+				" 'renderViewSaveMode' to 'mandaged'!\n" );
+	}
+
+}
+
+//__________________________________________________________
+//
+//
