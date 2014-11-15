@@ -1,0 +1,124 @@
+//
+// creator : sciloop
+//
+// Create for the input nodeTypes a set.
+//
+// For this script to work, the script : 'sciNodeType' may be neccessary
+// if you want to get the input list from the current selection list.
+//
+// second parameter : 'includeDerivedNodes', 'NOTIncludeDerivedNodes'.
+//
+// examples :
+//
+// sciCreateSetForNodeType( sciNodeType(ls("-l", "-sl")), "includeDerivedNodes" );
+// sciCreateSetForNodeType( sciNodeType(ls()), "includeDerivedNodes" );
+// sciCreateSetForNodeType( {"shape"}, "includeDerivedNodes" );
+//
+//_________________________________________________________________
+//
+//
+global proc sciCreateSetForNodeType(	string $nodeTypes[],
+										string $includeDerivedNodeTypes )
+{
+	string $sn = " // sciloop message : mel :"+
+					" 'sciCreateSetForNodeType' :";
+
+	if( size($nodeTypes)==0 )
+	{
+		print( $sn+" input string array is empty."+
+					" Select a node, please.\n" );
+		return;
+	}
+
+	// For every nodeType in the input list.
+	//
+	while( size($nodeTypes)!=0 )
+	{
+		string $type = $nodeTypes[0];
+
+		// If we want to put also all derived
+		// nodeTypes of the current nodeType
+		// in the set, do it here.
+		//
+		string $derivedNodeTypes[] = {};
+		string $derivedString = "";
+
+		if( $includeDerivedNodeTypes=="includeDerivedNodes" )
+		{
+			$derivedString = "derived_";
+
+			if( catchQuiet($derivedNodeTypes = nodeType(	"-derived",
+															"-isTypeName",
+															$type)) )
+			{
+				print( $sn+" could not get derived node types"+
+				"		 for a nodeType named : '"+$type+"'\n" );
+			}
+		}
+		else
+		{$derivedNodeTypes[0] = $type;}
+
+		string $allConcreteNodes[] = {};
+		string $setNode = "";
+
+		// For every nodeType that derives from the current nodeType.
+		//
+		for( $derivedType in $derivedNodeTypes )
+		{
+			string $objects[] = {};
+
+			if( catchQuiet($objects = lsType($derivedType)) )
+			{
+				print( $sn+" could not get objects for a"+
+						" nodeType named : '"+$derivedType+"'.\n" );
+				stringArrayRemove( {$derivedType}, $derivedNodeTypes );
+
+				continue;
+			}
+
+			// Remove the last element : <done>
+			//
+			$objects = stringArrayRemove( {"<done>"}, $objects );
+
+			if( $derivedType=="objectSet" )
+			{
+				print(	$sn+" do not create sets for nodeType :"+
+						" 'objectSet'.!\n" );
+
+				$derivedNodeTypes = stringArrayRemove(	{$derivedType},
+														$derivedNodeTypes );
+
+				continue;
+			}
+
+			if( !objExists("set_"+$type+"_"+$derivedString) )
+			{
+				$setNode = createNode(	"-skipSelect",
+										"-n", "set_"+$type+"_"+$derivedString,
+										"objectSet" );
+			}
+
+			if( catchQuiet(sets("-include", $setNode, $objects)) )
+			{
+				print( $sn+" could not add current object"+
+						" array to the set : '"+$setNode+"'.\n" );
+			}
+		}
+
+		string $set_master = "set_master";
+
+		if( objExists($set_master) )
+		{catchQuiet( sets("-include", $set_master, $setNode) );}
+
+		// Delete all occurences of the current nodeType from the array.
+		//
+		$nodeTypes = stringArrayRemove( {$type}, $nodeTypes );
+	}
+
+	print( $sn+" done!\n" );
+}
+
+//_______________________________________________________________
+//
+//
+
