@@ -1,4 +1,4 @@
-MayaAPI
+Maya
 =======
 
-plugins for Maya
+plugins and mel scripts for Maya
