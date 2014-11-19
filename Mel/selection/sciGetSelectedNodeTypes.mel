@@ -25,7 +25,8 @@ sciGetSelectedNodeTypesSourced();
 global proc string[] sciGetSelectedNodeTypes(	string $nodeTypes[],
 												string $inputArray[] )
 {
-	string $sn = " // sciloop message : mel : 'sciGetSelectedNodeTypes' :";
+	string $sn = " // sciloop message : mel :"+
+				" 'sciGetSelectedNodeTypes' :";
 
 	string $outputList[] = {};
 
@@ -33,7 +34,7 @@ global proc string[] sciGetSelectedNodeTypes(	string $nodeTypes[],
 	{
 		// Do we have a node of that nodeType in the scene at all?
 		//
-		string $typesInScene[] = ls( "-type", $nodeType );
+		string $typesInScene[] = ls( "-l", "-type", $nodeType );
 		int $sizeTypes = size( $typesInScene );
 		if( $sizeTypes==0 )
 		{
@@ -48,21 +49,27 @@ global proc string[] sciGetSelectedNodeTypes(	string $nodeTypes[],
 												"shape",
 												$typesInScene[0] );
 
-
 		// We want the selection and check whether
 		// its a node or a component.
 		//
 		string $sel[] = {};
 
-		if( size($inputArray)==0 )
+		int $sizeInput = size( $inputArray );
+		if( $sizeInput==0 )
 		{$sel = ls( "-l", "-selection" );}
 		else
-		{$sel = $inputArray;}
+		{
+			for( $i=0; $i<$sizeInput; $i++ )
+			{
+				$tmp = ls( "-l", $inputArray[$i] );
+				$sel[$i] = $tmp[0];
+			}
+		}
 
 		string $selectionList[] = {};
 		string $tmpList[] = {};
 
-		// We want only the node, not ist attribute part.
+		// We want only the node, not its attribute part.
 		//
 		for( $i=0; $i<size($sel); $i++ )
 		{$tmpList[$i] = plugNode( $sel[$i] );}
@@ -86,7 +93,7 @@ global proc string[] sciGetSelectedNodeTypes(	string $nodeTypes[],
 		}
 
 		// Depending on the type of 'nodeType', take into
-		// consideration also selected transform nodes.
+		// consideration also selected 'transform' nodes.
 		// If there`s a transform in the selection list,
 		// and if the target node is of type 'shape',
 		// we want to get the shape of the selected transform.
@@ -151,11 +158,12 @@ global proc string[] sciGetSelectedNodeTypes(	string $nodeTypes[],
 				if( $selectedTransforms[$i]!="" )
 				{
 					string $children[] = listRelatives(	"-f",
-														"-ad",
+														"-c",
 														"-type", $nodeType,
 														$selectedTransforms[$i] );
 
-					for( $k=0; $k<size($children); $k++ )
+					int $sizeChildren = size( $children );
+					for( $k=0; $k<$sizeChildren; $k++ )
 					{$localOutputList[size($localOutputList)] = $children[$k];}
 				}
 			}
@@ -165,7 +173,20 @@ global proc string[] sciGetSelectedNodeTypes(	string $nodeTypes[],
 			for( $i=0; $i<size($selectedTargetNodeTypes); $i++ )
 			{
 				if( $selectedTargetNodeTypes[$i]!="" )
-				{$localOutputList[size($localOutputList)] = $sel[$i];}
+				{
+					int $isAlreadyIn = false;
+					for( $k=0; $k<size($localOutputList); $k++ )
+					{
+						if( $sel[$i]==$localOutputList[$k] )
+						{
+							$isAlreadyIn = true;
+							break;
+						}
+					}
+
+					if( $isAlreadyIn==false )
+					{$localOutputList[size($localOutputList)] = $sel[$i];}
+				}
 			}
 
 			for( $node in $localOutputList )
@@ -173,12 +194,23 @@ global proc string[] sciGetSelectedNodeTypes(	string $nodeTypes[],
 		}
 	}
 
-print( $sn+" return nodes :\n" );
-if( size($outputList)==0 )
-{print( $sn+" return list empty!\n" );}
+string $nt = "";
+for( $nodeType in $nodeTypes )
+{$nt = $nt+$nodeType+" ";}
 
-for( $i=0; $i<size($outputList); $i++ )
-{print( $sn+" "+$i+" : '"+$outputList[$i]+"'\n" );}
+print( "\n" );
+
+if( size($outputList)==0 )
+{print( $sn+" return list empty for nodeType(s) : '"+$nt+"'!\n" );}
+else
+{
+	print( $sn+" return list for nodeType(s) : '"+$nt+"' :\n" );
+
+	for( $i=0; $i<size($outputList); $i++ )
+	{print( $sn+" "+$i+" : '"+$outputList[$i]+"'\n" );}
+}
+
+print( "\n" );
 
 	return $outputList;
 }
